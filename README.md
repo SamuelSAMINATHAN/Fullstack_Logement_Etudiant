@@ -1,4 +1,4 @@
-Plateforme de logements étudiants
+Plateforme de logements étudiants - DOROCHO
 ========================================
 
 ## 1. Lancer le projet
