@@ -128,6 +128,21 @@ class Logement {
 
 ---
 
+---
+
+On va se concentrer sur la partie frontend, c.a.d les fichiers qui se trouvent dans view/ :
+
+admin : Grégoire 
+annonce : Jennyfer 
+auth : Antoine 
+home : Samuel
+info : Samuel 
+layout : Grégoire 
+messaging : Quentin
+user : Hector 
+
+---
+
 ## 5. Todo List (Ce qu'il reste à faire)
 
 ### 1.1 Priorité élevée
