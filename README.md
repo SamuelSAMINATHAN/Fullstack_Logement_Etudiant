@@ -78,91 +78,90 @@ Vérifiez les paramètres de connexion dans `config/config.php` :
 
 ---
 
-## 2. Spécification projet – Todo list
+## 2. Protocole de réalisation : Approche "Data-First"
 
-### 2.1. Base technique
-- [ ] **Initialiser la base de données**
-  - [ ] Créer la base `crous_logements`
-  - [ ] Créer les tables : `utilisateur`, `annonce`, `favori`, `candidature`, `message`
-  - [ ] Ajouter quelques données de test (annonces, utilisateurs)
-- [ ] **Finaliser la configuration**
-  - [ ] Vérifier/adapter `config/config.php` (paramètres MySQL, `BASE_URL`)
+Pour garantir la cohérence technique et éviter les refontes coûteuses, nous adoptons une approche **Data-First**. L'ordre de développement doit impérativement être le suivant :
 
-### 2.2. Utilisateurs & authentification
-- [ ] **Inscription utilisateur**
-  - [ ] Formulaire d’inscription (étudiant / particulier / organisme)
-  - [ ] Validation des champs (PHP + côté client)
-  - [ ] Hash du mot de passe (password_hash)
-- [ ] **Connexion / déconnexion**
-  - [ ] Formulaire de connexion
-  - [ ] Gestion de session en PHP
-  - [ ] Lien de déconnexion
-- [ ] **Gestion du profil**
-  - [ ] Page « Mon profil »
-  - [ ] Modification des informations de l’utilisateur
+1.  **MCD / SQL (La Fondation)** : On commence par modéliser les données. Sans une base solide et des relations claires (Logement, Utilisateur, Message), le code PHP sera fragile.
+2.  **Models (PHP/PDO - La Logique)** : On crée les classes dans `app/models/`. C'est ici que l'on écrit les requêtes SQL via PDO. Un Model ne doit faire qu'une chose : interagir avec la base.
+3.  **Controllers (Le Chef d'Orchestre)** : On développe la logique métier dans `app/controllers/`. Le contrôleur appelle le Model pour récupérer les données, puis les transmet à la Vue.
+4.  **Views (HTML/CSS - L'Interface)** : Enfin, on s'occupe du rendu visuel. La vue ne doit contenir aucune logique complexe, seulement de l'affichage.
 
-### 2.3. Gestion des annonces
-- [ ] **CRUD annonces pour propriétaires (particuliers / organismes / étudiants colocataires)**
-  - [ ] Formulaire de création d’annonce
-  - [ ] Modification d’une annonce existante
-  - [ ] Suppression / archivage
-  - [ ] Liste « Mes annonces »
-- [ ] **Affichage public des annonces**
-  - [ ] Page liste des annonces (déjà commencée)
-  - [ ] Page détail d’une annonce (déjà commencée)
-  - [ ] Pagination simple si beaucoup d’annonces
+**Pourquoi c'est vital ?** Cette approche garantit que l'interface s'adapte aux données réelles et non l'inverse. Cela évite de se retrouver avec des formulaires qui ne correspondent pas aux colonnes de la base de données.
 
-### 2.4. Recherche et filtres
-- [ ] **Recherche d’annonces**
-  - [ ] Formulaire de recherche (ville, type de logement, budget, surface, etc.)
-  - [ ] Filtrage côté serveur (requêtes SQL avec `WHERE`)
-- [ ] **Recherche dynamique (Ajax – optionnel)**
-  - [ ] Endpoint PHP qui renvoie un JSON d’annonces filtrées
-  - [ ] JavaScript pour mettre à jour la liste sans recharger la page
+---
 
-### 2.5. Favoris
-- [ ] **Gestion des favoris pour les étudiants**
-  - [ ] Bouton « Ajouter / Retirer des favoris » sur la page d’annonce
-  - [ ] Table `favori` (étudiant ↔ annonce)
-  - [ ] Page « Mes favoris »
-  - [ ] Interaction Ajax pour ajouter/supprimer sans rechargement (optionnel)
+## 3. Guide d'intégration MySQL
 
-### 2.6. Candidatures
-- [ ] **Déposer une candidature**
-  - [ ] Formulaire de candidature sur la page détail d’une annonce
-  - [ ] Insertion en base dans `candidature`
-- [ ] **Suivi des candidatures**
-  - [ ] Page « Mes candidatures » côté étudiant
-  - [ ] Page « Candidatures reçues » côté propriétaire/organisme
-  - [ ] Changement de statut (en_attente, acceptee, refusee)
+### 3.1. Configuration
+Le fichier [config.php](file:///Users/samsam/Documents/vscode/fullstack/Dorocho/config/config.php) contient les constantes de connexion. Ne modifiez ce fichier que pour l'adapter à votre environnement local (identifiants MySQL).
 
-### 2.7. Messagerie / contact
-- [ ] **Contact entre étudiants et propriétaires/organismes**
-  - [ ] Formulaire de message lié à une annonce
-  - [ ] Stockage dans la table `message`
-  - [ ] Liste des messages reçus/envoyés pour chaque utilisateur
-  - [ ] Indicateur de message non lu
+### 3.2. Utilisation de la classe PDO
+Nous utilisons une classe [Database.php](file:///Users/samsam/Documents/vscode/fullstack/Dorocho/app/core/Database.php) pour gérer la connexion unique (Singleton). Pour exécuter une requête dans un model, utilisez :
+`$db = Database::getInstance();`
 
-### 2.8. Interface & UX
-- [ ] **Design général**
-  - [ ] Améliorer la feuille de style `public/css/style.css`
-  - [ ] Rendre le site responsive (mobile/tablette)
-- [ ] **Navigation**
-  - [ ] Barre de navigation avec liens principaux (Accueil, Annonces, Connexion, Inscription, Profil)
-  - [ ] Affichage conditionnel des liens selon le type d’utilisateur connecté
+### 3.3. Exemple concret : models/Logement.php
+Voici comment structurer une fonction pour retourner des données :
 
-### 2.9. Sécurité & robustesse
-- [ ] **Sécurité**
-  - [ ] Utiliser des requêtes préparées partout (PDO)
-  - [ ] Échapper toutes les sorties (`htmlspecialchars`)
-  - [ ] Vérifier les droits d’accès (un utilisateur ne peut modifier que ses propres annonces, etc.)
-- [ ] **Validation**
-  - [ ] Validation des formulaires côté serveur
-  - [ ] Messages d’erreur clairs pour l’utilisateur
+```php
+<?php
+// app/models/Logement.php
 
-### 2.10. Améliorations possibles (optionnel)
-- [ ] Système de rôles plus avancé (admin, modérateur)
-- [ ] Upload de photos pour les annonces
-- [ ] Système de notation/commentaires
-- [ ] Export PDF ou impression des annonces / candidatures
+class Logement {
+    public static function getAll() {
+        $db = Database::getInstance();
+        $stmt = $db->query("SELECT * FROM logement ORDER BY date_publication DESC");
+        return $stmt->fetchAll(); // Retourne un tableau associatif
+    }
+}
+```
 
+---
+
+## 4. Répartition stratégique des rôles
+
+| Profil | Membres | Responsabilités |
+| :--- | :--- | :--- |
+| **Moteurs** | 3 membres | Backend Critique, Architecture MVC, Sécurité, Gestion de la Base de données. |
+| **Soutien** | 1 membre | Frontend (HTML/CSS), Design UI/UX, Intégration des composants. |
+| **Passif** | 1 membre | Documentation technique, Tests simples (formulaires), Relecture du README. |
+
+---
+
+## 5. Todo List (Ce qu'il reste à faire)
+
+### 1.1 Priorité élevée
+- [ ] **Page d'accueil** : Page principale du site présentant la plateforme, permettant d’accéder rapidement aux principales fonctionnalités et à la recherche de logements.
+- [ ] **Inscription** : Création de compte avec différents profils (étudiant, propriétaire, administrateur).
+- [ ] **Authentification** : Connexion sécurisée des utilisateurs inscrits.
+- [ ] **Édition du profil** : Consultation et modification des informations personnelles par l'utilisateur.
+- [ ] **FAQ** : Réponses aux questions fréquemment posées.
+- [ ] **CGU et Mentions légales** : Pages informatives obligatoires.
+- [ ] **Recherche simple** : Recherche par mot-clé dans la barre de recherche.
+- [ ] **Backoffice - Gestion des utilisateurs** : Administration des comptes et des droits d'accès.
+- [ ] **Backoffice - Gestion de la FAQ** : CRUD des questions/réponses.
+- [ ] **Backoffice - Gestion des CGU/Mentions légales** : Mise à jour des contenus légaux.
+- [ ] **Contact** : Formulaire de contact pour assistance ou signalement.
+- [ ] **Profil complet** : Permettre de compléter les informations personnelles.
+- [ ] **Gestion des annonces** : Ajout, modification et suppression par les propriétaires/organismes.
+- [ ] **Respect du RGPD** : Mesures de protection des données personnelles.
+
+### 1.2 Priorité moyenne
+- [ ] **Mot de passe oublié** : Processus de réinitialisation sécurisé (e-mail).
+- [ ] **Site responsive** : Adaptation automatique à tous les types d'écrans (mobile, tablette, PC).
+- [ ] **Recherche avancée** : Filtres multicritères pour affiner les résultats.
+- [ ] **Alertes** : Notifications lors de la publication de nouvelles annonces correspondant aux critères.
+- [ ] **Avis** : Système d'évaluation et commentaires sur les annonces/propriétaires.
+- [ ] **Option colocataire** : Préciser le type de logement ou recherche de colocataires.
+- [ ] **Favoris** : Enregistrement d'annonces pour consultation ultérieure.
+- [ ] **Partage d'offre** : Partage via lien, e-mail ou réseaux sociaux.
+- [ ] **Badge "Propriétaire Vérifié"** : Renforcement de la confiance utilisateur.
+
+### 1.3 Priorité faible
+- [ ] **Messagerie interne** : Système de communication directe entre utilisateurs.
+- [ ] **Site multilingue** : Accessibilité internationale.
+- [ ] **Backoffice - Gestion messagerie** : Supervision des échanges par les administrateurs.
+- [ ] **Backoffice - Gestion du rendu visuel** : Personnalisation des éléments visuels du site.
+- [ ] **Authentification 2FA** : Sécurité renforcée lors de la connexion.
+
+# Fullstack_Logement_Etudiant
