@@ -1,4 +1,4 @@
-CROUS – Plateforme de logements étudiants
+Plateforme de logements étudiants
 ========================================
 
 ## 1. Lancer le projet
