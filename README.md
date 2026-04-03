@@ -6,7 +6,7 @@ Plateforme de logements étudiants - DOROCHO
 ### 1.1. Prérequis communs
 - PHP 8+ installé
 - Serveur MySQL/MariaDB (par exemple via XAMPP/MAMP/WAMP)
-- Base de données `Dorocho_logements` créée avec les tables nécessaires (au minimum `annonce`)
+- Base de données `Dorocho SQL` créée avec les tables nécessaires (au minimum `annonce`)
 
 Vérifiez les paramètres de connexion dans `config/config.php` :
 
@@ -61,7 +61,7 @@ Vérifiez les paramètres de connexion dans `config/config.php` :
    - XAMPP : `C:\xampp\htdocs\Dorocho`
    - WAMP : `C:\wamp64\www\Dorocho`
 3. Démarrer Apache et MySQL depuis le panneau de contrôle.
-4. Créer la base `Dorocho_logements` dans phpMyAdmin et importer le script SQL.
+4. Créer la base `Dorocho SQL` dans phpMyAdmin et importer le script SQL.
 5. Accéder au projet :
    - `http://localhost/Dorocho/public/index.php`
 
