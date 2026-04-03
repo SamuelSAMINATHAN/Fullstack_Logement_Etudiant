@@ -11,7 +11,7 @@ CROUS – Plateforme de logements étudiants
 Vérifiez les paramètres de connexion dans `config/config.php` :
 
 - **DB_HOST** : hôte MySQL (souvent `localhost`)
-- **DB_NAME** : nom de la base (`crous_logements`)
+- **DB_NAME** : nom de la base (`dorocho`)
 - **DB_USER** : utilisateur MySQL
 - **DB_PASS** : mot de passe MySQL
 
