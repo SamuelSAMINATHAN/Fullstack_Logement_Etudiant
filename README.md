@@ -6,7 +6,7 @@ Plateforme de logements étudiants - DOROCHO
 ### 1.1. Prérequis communs
 - PHP 8+ installé
 - Serveur MySQL/MariaDB (par exemple via XAMPP/MAMP/WAMP)
-- Base de données `crous_logements` créée avec les tables nécessaires (au minimum `annonce`)
+- Base de données `Dorocho_logements` créée avec les tables nécessaires (au minimum `annonce`)
 
 Vérifiez les paramètres de connexion dans `config/config.php` :
 
@@ -35,7 +35,7 @@ Vérifiez les paramètres de connexion dans `config/config.php` :
    ```
 4. Depuis le dossier du projet :
    ```bash
-   cd /Users/samsam/Documents/vscode/fullstack/CROUS
+   cd /Users/samsam/Documents/vscode/fullstack/Dorocho
    php -S localhost:8000 -t public
    ```
 5. Ouvrir le navigateur à l’adresse :
@@ -44,11 +44,11 @@ Vérifiez les paramètres de connexion dans `config/config.php` :
 #### Option B – MAMP/XAMPP
 
 1. Installer MAMP ou XAMPP pour macOS.
-2. Copier le dossier `CROUS` dans le dossier web :
+2. Copier le dossier `Dorocho` dans le dossier web :
    - MAMP : `Applications/MAMP/htdocs/`
 3. Démarrer les serveurs Apache + MySQL depuis MAMP/XAMPP.
 4. Accéder au projet dans le navigateur :
-   - `http://localhost/CROUS/public/index.php`
+   - `http://localhost/Dorocho/public/index.php`
 
 ---
 
@@ -57,20 +57,20 @@ Vérifiez les paramètres de connexion dans `config/config.php` :
 #### Option A – XAMPP/WAMP (recommandé)
 
 1. Installer XAMPP ou WAMP.
-2. Copier le dossier `CROUS` dans le dossier web :
-   - XAMPP : `C:\xampp\htdocs\CROUS`
-   - WAMP : `C:\wamp64\www\CROUS`
+2. Copier le dossier `Dorocho` dans le dossier web :
+   - XAMPP : `C:\xampp\htdocs\Dorocho`
+   - WAMP : `C:\wamp64\www\Dorocho`
 3. Démarrer Apache et MySQL depuis le panneau de contrôle.
-4. Créer la base `crous_logements` dans phpMyAdmin et importer le script SQL.
+4. Créer la base `Dorocho_logements` dans phpMyAdmin et importer le script SQL.
 5. Accéder au projet :
-   - `http://localhost/CROUS/public/index.php`
+   - `http://localhost/Dorocho/public/index.php`
 
 #### Option B – Serveur PHP intégré
 
 1. Installer PHP pour Windows (par exemple via `choco install php` avec Chocolatey).
 2. Dans un terminal (PowerShell ou CMD), depuis le dossier du projet :
    ```bash
-   cd C:\chemin\vers\CROUS
+   cd C:\chemin\vers\Dorocho
    php -S localhost:8000 -t public
    ```
 3. Ouvrir :
