@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AdminController extends Controller
 {
     private $adminModel;
@@ -110,7 +114,7 @@ class AdminController extends Controller
             $this->utilisateurModel->deleteUser($idUtilisateur);
             $this->setFlash('success', 'Utilisateur supprimé.');
             $this->redirect('/admin/manageUsers');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/admin/viewUser/' . $idUtilisateur);
         }
@@ -131,7 +135,7 @@ class AdminController extends Controller
             $this->bailleurModel->verifyLandlord($idUtilisateur);
             $this->setFlash('success', 'Bailleur vérifié.');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la vérification.');
             $this->redirect('/admin/manageUsers');
         }
@@ -152,7 +156,7 @@ class AdminController extends Controller
             $this->bailleurModel->unverifyLandlord($idUtilisateur);
             $this->setFlash('success', 'Vérification retirée.');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la modification.');
             $this->redirect('/admin/manageUsers');
         }
@@ -173,7 +177,7 @@ class AdminController extends Controller
             $this->bailleurModel->shadowbanLandlord($idUtilisateur);
             $this->setFlash('success', 'Bailleur shadowbanni.');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors du shadowban.');
             $this->redirect('/admin/manageUsers');
         }
@@ -194,7 +198,7 @@ class AdminController extends Controller
             $this->bailleurModel->unbanLandlord($idUtilisateur);
             $this->setFlash('success', 'Shadowban retiré.');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors du retrait du shadowban.');
             $this->redirect('/admin/manageUsers');
         }

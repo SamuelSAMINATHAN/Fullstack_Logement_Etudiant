@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Core;
+
 // ============================================================
 //  DATABASE.PHP — Classe de connexion et d'accès aux données
 //  Projet : Plateforme de logements étudiants (PHP MVC)
@@ -35,7 +37,7 @@ class Database
 
     // L'objet PDO est stocké en propriété protégée :
     // accessible par cette classe ET par tous les modèles enfants.
-    protected ?PDO $pdo = null;
+    protected ?\PDO $pdo = null;
 
 
     // ----------------------------------------------------------
@@ -65,20 +67,55 @@ class Database
         $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
 
         $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES   => false,
         ];
 
         try {
-            $this->pdo = new PDO($dsn, $this->username, $this->password, $options);
-        } catch (PDOException $e) {
+            $this->pdo = new \PDO($dsn, $this->username, $this->password, $options);
+        } catch (\PDOException $e) {
             // En production : logger l'erreur, ne jamais l'afficher
             error_log("[DB] Erreur de connexion : " . $e->getMessage());
-            throw new Exception("Connexion base impossible");
+            throw new \Exception("Connexion base impossible");
         }
     }
 
+
+    // ----------------------------------------------------------
+    //  query(string $sql, array $params = []): array
+    //
+    //  Exécute une requête SQL personnalisée et retourne le résultat.
+    //  Supporte les paramètres nommés ou indexés.
+    // ----------------------------------------------------------
+    public function query(string $sql, array $params = []): array
+    {
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            
+            // Binder les paramètres si ce sont des paramètres nommés
+            if (!empty($params) && is_string(array_key_first($params))) {
+                foreach ($params as $key => $value) {
+                    $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+                    $stmt->bindValue(':' . ltrim($key, ':'), $value, $paramType);
+                }
+                $stmt->execute();
+            } else {
+                // Paramètres positionnels (?)
+                $stmt->execute($params);
+            }
+            
+            // On vérifie si c'est un SELECT (qui retourne un jeu de résultats)
+            if (stripos(trim($sql), 'SELECT') === 0 || stripos(trim($sql), 'SHOW') === 0 || stripos(trim($sql), 'EXPLAIN') === 0) {
+                return $stmt->fetchAll();
+            }
+            
+            return []; // Pour INSERT, UPDATE, DELETE
+        } catch (\PDOException $e) {
+            error_log("[DB] Erreur QUERY : " . $e->getMessage());
+            return [];
+        }
+    }
 
     // ----------------------------------------------------------
     //  select(string $sql, array $params = []): array
@@ -102,7 +139,7 @@ class Database
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             error_log("[DB] Erreur SELECT : " . $e->getMessage());
             return [];
         }
@@ -129,7 +166,7 @@ class Database
             $stmt->execute($params);
             $result = $stmt->fetch();
             return $result !== false ? $result : null;
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             error_log("[DB] Erreur SELECT ONE : " . $e->getMessage());
             return null;
         }
@@ -188,7 +225,7 @@ class Database
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->rowCount();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             error_log("[DB] Erreur INSERT : " . $e->getMessage());
             return 0;
         }
@@ -213,7 +250,7 @@ class Database
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->rowCount();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             error_log("[DB] Erreur UPDATE : " . $e->getMessage());
             return 0;
         }
@@ -238,7 +275,7 @@ class Database
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->rowCount();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             error_log("[DB] Erreur DELETE : " . $e->getMessage());
             return 0;
         }

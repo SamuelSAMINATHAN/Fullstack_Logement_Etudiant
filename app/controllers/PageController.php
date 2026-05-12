@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class PageController extends Controller
 {
     private $informationLegaleModel;
@@ -147,7 +151,7 @@ class PageController extends Controller
 
             $this->setFlash('success', 'Votre message a été envoyé. Nous vous répondrons rapidement !');
             $this->redirect('/');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de l\'envoi : ' . $e->getMessage());
             $this->redirect('/page/contact');
         }

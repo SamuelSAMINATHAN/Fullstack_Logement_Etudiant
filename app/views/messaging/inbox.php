@@ -1,138 +1,92 @@
-<?php
-require APPROOT . '/views/layout/header.php';
-?>
+<?php require APPROOT . '/views/layout/header.php'; ?>
 
-<div class="row h-75">
-    <div class="col-lg-4 mb-4">
-        <!-- Liste des conversations -->
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white border-bottom p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold mb-0">
-                        <i class="fas fa-envelope"></i> Messages
-                    </h5>
-                    <span class="badge bg-primary"><?php echo count($conversations ?? []); ?></span>
-                </div>
-                <input 
-                    type="text" 
-                    class="form-control form-control-sm"
-                    placeholder="Rechercher une conversation..."
-                    id="conversationSearch"
-                >
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Messages</h5>
+                <span class="badge bg-primary rounded-pill"><?php echo count($conversations ?? []); ?></span>
             </div>
             <div class="list-group list-group-flush" style="max-height: 600px; overflow-y: auto;">
                 <?php if (!empty($conversations)): ?>
                     <?php foreach ($conversations as $conv): ?>
-                        <a 
-                            href="<?php echo URLROOT; ?>/message/conversation/<?php echo $conv['id']; ?>"
-                            class="list-group-item list-group-item-action py-3 px-4 <?php echo ($conv['id'] === $current_conversation_id ? 'active' : ''); ?>"
-                        >
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <strong><?php echo Security::escape($conv['autre_utilisateur_nom']); ?></strong>
-                                <small class="text-muted"><?php echo date('H:i', strtotime($conv['dernier_message_date'])); ?></small>
+                        <a href="<?php echo URLROOT; ?>/message/conversation/<?php echo Security::escape($conv['interlocuteur_id']); ?>" class="list-group-item list-group-item-action <?php echo (isset($interlocuteur_id) && $interlocuteur_id == $conv['interlocuteur_id']) ? 'active' : ''; ?>">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><?php echo Security::escape($conv['interlocuteur_prenom'] . ' ' . $conv['interlocuteur_nom']); ?></h6>
+                                <small class="<?php echo (isset($interlocuteur_id) && $interlocuteur_id == $conv['interlocuteur_id']) ? 'text-white' : 'text-muted'; ?>"><?php echo date('d/m', strtotime($conv['dernier_message_date'])); ?></small>
                             </div>
-                            <p class="mb-1 text-muted text-truncate" style="font-size: 0.9rem;">
-                                <?php echo Security::escape(substr($conv['dernier_message'], 0, 40)); ?>...
-                            </p>
-                            <?php if ($conv['non_lus'] > 0): ?>
-                                <span class="badge bg-primary"><?php echo $conv['non_lus']; ?></span>
+                            <p class="mb-1 small text-truncate <?php echo $conv['non_lu'] ? 'fw-bold' : ''; ?>"><?php echo Security::escape($conv['dernier_message']); ?></p>
+                            <?php if ($conv['non_lu']): ?>
+                                <span class="badge bg-danger rounded-pill float-end">Nouveau</span>
                             <?php endif; ?>
                         </a>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <div class="p-4 text-center text-muted">
-                        <i class="fas fa-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
-                        <p class="mt-2 mb-0">Aucune conversation</p>
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Votre boîte de réception est vide.</p>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-
-    <!-- Conversation actuelle -->
-    <div class="col-lg-8">
-        <?php if (!empty($current_conversation)): ?>
-            <div class="card border-0 shadow-sm rounded-4 d-flex flex-column" style="height: 100%;">
-                <!-- Header -->
-                <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="fw-bold mb-0"><?php echo Security::escape($current_conversation['autre_utilisateur_nom']); ?></h5>
-                        <small class="text-muted">Connecté il y a 5 min</small>
-                    </div>
-                    <div>
-                        <button class="btn btn-sm btn-outline-primary" title="Appel">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger ms-2" title="Supprimer">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm h-100">
+            <?php if (isset($interlocuteur)): ?>
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Conversation avec <?php echo Security::escape($interlocuteur['prenom'] . ' ' . $interlocuteur['nom']); ?></h5>
                 </div>
-
-                <!-- Messages -->
-                <div class="card-body p-4 flex-grow-1" style="overflow-y: auto; background-color: #f8f9fa;">
-                    <div id="messagesContainer">
+                <div class="card-body d-flex flex-column" style="height: 500px;">
+                    <div class="flex-grow-1 overflow-auto mb-3 px-2" id="messages-container">
                         <?php if (!empty($messages)): ?>
                             <?php foreach ($messages as $msg): ?>
-                                <?php $is_mine = $msg['auteur_id'] === $_SESSION['user_id']; ?>
-                                <div class="mb-3 d-flex <?php echo ($is_mine ? 'justify-content-end' : 'justify-content-start'); ?>">
-                                    <div class="<?php echo ($is_mine ? 'bg-primary text-white' : 'bg-light'); ?> rounded-3 p-3" style="max-width: 70%;">
-                                        <p class="mb-0"><?php echo Security::escape($msg['contenu']); ?></p>
-                                        <small class="<?php echo ($is_mine ? 'text-white-50' : 'text-muted'); ?> d-block mt-1">
-                                            <?php echo date('H:i', strtotime($msg['date_message'])); ?>
+                                <?php $is_me = $msg['expediteur_id'] == $_SESSION['user_id']; ?>
+                                <div class="d-flex mb-3 <?php echo $is_me ? 'justify-content-end' : 'justify-content-start'; ?>">
+                                    <div class="p-3 rounded-3 <?php echo $is_me ? 'bg-primary text-white' : 'bg-light'; ?>" style="max-width: 75%;">
+                                        <p class="mb-1" style="white-space: pre-wrap;"><?php echo Security::escape($msg['contenu']); ?></p>
+                                        <small class="<?php echo $is_me ? 'text-white-50' : 'text-muted'; ?>" style="font-size: 0.7rem;">
+                                            <?php echo date('d/m/Y H:i', strtotime($msg['date_envoi'])); ?>
                                         </small>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
+                        <?php else: ?>
+                            <p class="text-center text-muted mt-5">Envoyez votre premier message !</p>
                         <?php endif; ?>
                     </div>
-                </div>
-
-                <!-- Input -->
-                <div class="card-footer bg-white border-top p-3">
-                    <form method="POST" action="<?php echo URLROOT; ?>/message/send" class="d-flex gap-2">
+                    
+                    <form action="<?php echo URLROOT; ?>/message/send" method="POST" class="mt-auto">
                         <input type="hidden" name="csrf_token" value="<?php echo Security::csrfToken(); ?>">
-                        <input type="hidden" name="conversation_id" value="<?php echo $current_conversation['id']; ?>">
+                        <input type="hidden" name="destinataire_id" value="<?php echo Security::escape($interlocuteur['id']); ?>">
                         
-                        <input 
-                            type="text" 
-                            name="message" 
-                            class="form-control rounded-pill"
-                            placeholder="Écrivez votre message..."
-                            required
-                        >
-                        <button type="submit" class="btn btn-primary rounded-pill">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                        <div class="input-group">
+                            <textarea name="contenu" class="form-control" rows="2" placeholder="Écrivez votre message..." required></textarea>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </form>
                 </div>
-            </div>
-        <?php else: ?>
-            <div class="card border-0 shadow-sm rounded-4 h-100 d-flex align-items-center justify-content-center">
-                <div class="text-center text-muted">
-                    <i class="fas fa-comments" style="font-size: 4rem; opacity: 0.1;"></i>
-                    <h5 class="mt-3 mb-2">Sélectionnez une conversation</h5>
-                    <p>Ou commencez une nouvelle conversation</p>
-                    <a href="<?php echo URLROOT; ?>/annonce" class="btn btn-primary btn-sm mt-3">
-                        <i class="fas fa-plus"></i> Nouvelle conversation
-                    </a>
+                
+                <script>
+                    // Scroll to bottom of messages container
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var container = document.getElementById("messages-container");
+                        container.scrollTop = container.scrollHeight;
+                    });
+                </script>
+            <?php else: ?>
+                <div class="card-body d-flex align-items-center justify-content-center">
+                    <div class="text-center text-muted">
+                        <i class="far fa-comments fa-4x mb-3"></i>
+                        <h4>Sélectionnez une conversation</h4>
+                        <p>Choisissez un contact dans la liste pour afficher les messages.</p>
+                    </div>
                 </div>
-            </div>
-        <?php endif; ?>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
-
-<script>
-    // Auto-scroll vers le dernier message
-    const container = document.getElementById('messagesContainer');
-    if (container) {
-        container.scrollTop = container.scrollHeight;
-    }
-
-    // Refresh messages toutes les 3 secondes
-    setInterval(function() {
-        location.reload();
-    }, 3000);
-</script>
 
 <?php require APPROOT . '/views/layout/footer.php'; ?>

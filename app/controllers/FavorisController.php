@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class FavorisController extends Controller
 {
     private $favorisModel;
@@ -57,7 +61,7 @@ class FavorisController extends Controller
             $this->favorisModel->addFavorite($_SESSION['user_id'], $idAnnonce);
             $this->setFlash('success', 'Annonce ajoutée aux favoris !');
             $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de l\'ajout aux favoris : ' . $e->getMessage());
             $this->redirect('/annonce/detail/' . $idAnnonce);
         }
@@ -78,7 +82,7 @@ class FavorisController extends Controller
             $this->favorisModel->removeFavorite($_SESSION['user_id'], $idAnnonce);
             $this->setFlash('success', 'Annonce supprimée des favoris !');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/favoris');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression des favoris.');
             $this->redirect('/favoris');
         }

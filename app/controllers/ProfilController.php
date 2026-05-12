@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class ProfilController extends Controller
 {
     private $utilisateurModel;
@@ -111,7 +115,7 @@ class ProfilController extends Controller
 
             $this->setFlash('success', 'Profil mis à jour avec succès !');
             $this->redirect('/profil/profile');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
             $this->redirect('/profil/profile');
         }
@@ -151,7 +155,7 @@ class ProfilController extends Controller
 
         $currentPassword = $post['current_password'] ?? '';
         $newPassword = $post['new_password'] ?? '';
-        $confirmPassword = $post['confirm_password'] ?? '';
+        $confirmPassword = $post['password_confirm'] ?? '';
 
         if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
             $this->setFlash('error', 'Tous les champs sont obligatoires.');
@@ -179,7 +183,7 @@ class ProfilController extends Controller
             $this->utilisateurModel->updateUser($_SESSION['user_id'], ['mdp' => $newPassword]);
             $this->setFlash('success', 'Mot de passe changé avec succès !');
             $this->redirect('/profil/profile');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors du changement : ' . $e->getMessage());
             $this->redirect('/profil/changePassword');
         }
@@ -222,7 +226,7 @@ class ProfilController extends Controller
             $this->setFlash('success', 'Demande de suppression enregistrée. Vous allez être déconnecté.');
             Session::destroy();
             $this->redirect('/');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la demande.');
             $this->redirect('/profil/requestDeletion');
         }

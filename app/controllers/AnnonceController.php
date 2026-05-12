@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AnnonceController extends Controller
 {
     private $annonceModel;
@@ -42,9 +46,10 @@ class AnnonceController extends Controller
 
         // Ajouter les photos et les avis
         foreach ($annonces as &$annonce) {
-            $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($annonce['idAnnonce']);
-            $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($annonce['idAnnonce']);
-            $annonce['nb_avis'] = $this->avisModel->countReviewsByAnnouncement($annonce['idAnnonce']);
+            $id = $annonce['id'] ?? $annonce['idAnnonce'];
+            $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
+            $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($id);
+            $annonce['nb_avis'] = $this->avisModel->countReviewsByAnnouncement($id);
         }
 
         $data = [
@@ -53,7 +58,7 @@ class AnnonceController extends Controller
             'page' => $page
         ];
 
-        $this->view('annonce/index', $data);
+        $this->view('annonce/liste', $data);
     }
 
     /**
@@ -177,7 +182,7 @@ class AnnonceController extends Controller
 
             $this->setFlash('success', 'Annonce créée avec succès !');
             $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la création : ' . $e->getMessage());
             $this->redirect('/annonce/create');
         }
@@ -264,7 +269,7 @@ class AnnonceController extends Controller
 
             $this->setFlash('success', 'Annonce mise à jour avec succès !');
             $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
             $this->redirect('/annonce/edit/' . $idAnnonce);
         }
@@ -292,7 +297,7 @@ class AnnonceController extends Controller
             $this->annonceModel->deleteAnnouncement($idAnnonce);
             $this->setFlash('success', 'Annonce supprimée avec succès !');
             $this->redirect('/annonce');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/annonce/detail/' . $idAnnonce);
         }

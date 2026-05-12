@@ -1,5 +1,8 @@
 <?php
 
+namespace App\Core;
+
+
 class Controller
 {
     protected function view(string $view, array $data = []): void
@@ -20,27 +23,37 @@ class Controller
             return;
         }
 
+        // Ajouter les flash messages automatiquement
+        if (empty($data['success_message'])) {
+            $data['success_message'] = $this->getFlash('success');
+        }
+        if (empty($data['error_message'])) {
+            $data['error_message'] = $this->getFlash('error');
+        }
+
         extract($data, EXTR_SKIP);
+        class_alias('\App\Core\Security', 'Security');
+        class_alias('\App\Core\Session', 'Session');
 
         require $viewPath;
     }
 
     protected function model(string $model): object
     {
+        $fullModelName = '\\App\\Models\\' . $model;
         $modelPath = APPROOT . '/models/' . $model . '.php';
 
         if (!file_exists($modelPath)) {
-            error_log("[Controller] Modèle introuvable : $modelPath");
-            throw new Exception("Modèle '$model' introuvable.");
+            throw new \Exception("Modèle '$model' introuvable.");
         }
 
         require_once $modelPath;
 
-        if (!class_exists($model)) {
-            throw new Exception("La classe '$model' n'existe pas dans $modelPath.");
+        if (!class_exists($fullModelName)) {
+            throw new \Exception("La classe '$model' n'existe pas dans $modelPath.");
         }
 
-        return new $model();
+        return new $fullModelName();
     }
 
     protected function redirect(string $url): void

@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AvisController extends Controller
 {
     private $avisModel;
@@ -80,7 +84,7 @@ class AvisController extends Controller
 
             $this->setFlash('success', 'Avis posté avec succès !');
             $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la création de l\'avis : ' . $e->getMessage());
             $this->redirect('/annonce/detail/' . $idAnnonce);
         }
@@ -176,7 +180,7 @@ class AvisController extends Controller
 
             $this->setFlash('success', 'Avis mis à jour avec succès !');
             $this->redirect('/avis/myReviews');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
             $this->redirect('/avis/edit/' . $idAvis);
         }
@@ -204,7 +208,7 @@ class AvisController extends Controller
             $this->avisModel->deleteReview($idAvis);
             $this->setFlash('success', 'Avis supprimé avec succès !');
             $this->redirect('/avis/myReviews');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/');
         }

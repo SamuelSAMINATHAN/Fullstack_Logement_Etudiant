@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AdminFaqController extends Controller
 {
     private $faqModel;
@@ -81,7 +85,7 @@ class AdminFaqController extends Controller
 
             $this->setFlash('success', 'FAQ créée avec succès !');
             $this->redirect('/admin/faq');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la création : ' . $e->getMessage());
             $this->redirect('/admin/faq/create');
         }
@@ -156,7 +160,7 @@ class AdminFaqController extends Controller
 
             $this->setFlash('success', 'FAQ mise à jour avec succès !');
             $this->redirect('/admin/faq');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
             $this->redirect('/admin/faq/edit/' . $idFAQ);
         }
@@ -184,7 +188,7 @@ class AdminFaqController extends Controller
             $this->faqModel->deleteFAQ($idFAQ);
             $this->setFlash('success', 'FAQ supprimée.');
             $this->redirect('/admin/faq');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/admin/faq');
         }

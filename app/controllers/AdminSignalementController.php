@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AdminSignalementController extends Controller
 {
     private $signalementModel;
@@ -119,7 +123,7 @@ class AdminSignalementController extends Controller
             }
 
             $this->redirect('/admin/signalement');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors du traitement : ' . $e->getMessage());
             $this->redirect('/admin/signalement/view/' . $idSignalement);
         }
@@ -147,7 +151,7 @@ class AdminSignalementController extends Controller
             $this->signalementModel->deleteReport($idSignalement);
             $this->setFlash('success', 'Signalement supprimé.');
             $this->redirect('/admin/signalement');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/admin/signalement');
         }

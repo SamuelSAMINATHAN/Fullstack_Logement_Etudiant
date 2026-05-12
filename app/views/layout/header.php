@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo Security::escape($title ?? 'Dorocho - Plateforme de logements étudiants'); ?></title>
+    <title><?php echo \App\Core\Security::escape($title ?? 'Dorocho - Plateforme de logements étudiants'); ?></title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -242,7 +242,7 @@
 
     <!-- Messages Flash -->
     <div class="container mt-3">
-        <?php if ($success_message = $this->getFlash('success')): ?>
+        <?php if (!empty($success_message)): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle"></i>
                 <strong>Succès !</strong> <?php echo Security::escape($success_message); ?>
@@ -250,7 +250,7 @@
             </div>
         <?php endif; ?>
 
-        <?php if ($error_message = $this->getFlash('error')): ?>
+        <?php if (!empty($error_message)): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-circle"></i>
                 <strong>Erreur !</strong> <?php echo Security::escape($error_message); ?>

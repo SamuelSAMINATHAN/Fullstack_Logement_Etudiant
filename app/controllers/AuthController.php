@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Security;
+use App\Core\Session;
+use App\Core\Controller;
+
 class AuthController extends Controller
 {
     private $utilisateurModel;
@@ -71,11 +77,11 @@ class AuthController extends Controller
         }
 
         // Mettre à jour la dernière connexion
-        $this->utilisateurModel->updateLastLogin($user['idUtilisateur']);
+        $this->utilisateurModel->updateLastLogin($user['id'] ?? $user['idUtilisateur']);
 
         // Créer la session
         Session::regenerate();
-        Session::set('user_id', $user['idUtilisateur']);
+        Session::set('user_id', $user['id'] ?? $user['idUtilisateur']);
         Session::set('user_email', $user['email']);
         Session::set('user_nom', $user['nom']);
         Session::set('user_prenom', $user['prenom']);
@@ -88,18 +94,25 @@ class AuthController extends Controller
     /**
      * Affiche la page d'inscription
      */
-    public function register()
+    public function register($type = null)
     {
-        // Rediriger si déjà connecté
-        if ($this->isLoggedIn()) {
-            $this->redirect('/');
+        // 1. Si aucun type n'est choisi, on affiche la page de choix
+        if ($type === null) {
+            $this->view('auth/select_type');
+            return;
         }
 
-        $data = [
-            'csrf_token' => Security::csrfToken()
-        ];
+        // 2. On prépare les données communes (CSRF)
+        $data = ['csrf_token' => Security::csrfToken()];
 
-        $this->view('auth/register', $data);
+        // 3. On affiche le formulaire spécifique
+        if ($type === 'etudiant') {
+            $this->view('auth/register_etudiant', $data);
+        } elseif ($type === 'bailleur') {
+            $this->view('auth/register_bailleur', $data);
+        } else {
+            $this->redirect('/auth/register');
+        }
     }
 
     /**
@@ -194,7 +207,7 @@ class AuthController extends Controller
 
             $this->setFlash('success', 'Inscription réussie ! Veuillez vous connecter.');
             $this->redirect('/auth/login');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
             $this->redirect('/auth/register');
         }

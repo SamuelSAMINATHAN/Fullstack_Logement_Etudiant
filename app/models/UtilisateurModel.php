@@ -151,6 +151,6 @@ class UtilisateurModel extends Model
     public function isEmailUnique($email)
     {
         $user = $this->getUserByEmail($email);
-        return $user === null;
+        return empty($user);
     }
 }
