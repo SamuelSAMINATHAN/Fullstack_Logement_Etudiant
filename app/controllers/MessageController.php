@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class MessageController extends Controller
 {
     private $messageModel;
@@ -124,7 +128,7 @@ class MessageController extends Controller
 
             $this->setFlash('success', 'Message envoyé !');
             $this->redirect('/message/conversation/' . $idDestinataire);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de l\'envoi : ' . $e->getMessage());
             $this->redirect('/message/conversation/' . $idDestinataire);
         }
@@ -152,7 +156,7 @@ class MessageController extends Controller
             $this->messageModel->deleteConversation($_SESSION['user_id'], $idInterlocuteur);
             $this->setFlash('success', 'Conversation supprimée.');
             $this->redirect('/message/inbox');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/message/inbox');
         }

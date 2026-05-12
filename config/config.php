@@ -1,12 +1,31 @@
 <?php
 
-// Configuration de la base de données
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'dorocho_logements');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');
+if($_SERVER['SERVER_NAME'] == 'localhost')
+{
+    /** database config **/
+    define('DB_NAME', 'test');
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', 'root');
+    define('DB_DRIVER', '');
+    define('DB_CHARSET', 'utf8mb4');
 
-// Tu peux aussi ajouter l'URL racine ici par exemple
-define('APPROOT', dirname(dirname(__FILE__)));
-define('URLROOT', 'http://localhost/dorocho');
+    define('ROOT', 'http://localhost:8888/test/public');
+    
+    define('URLROOT', 'http://localhost:8888/test');
+
+} else {
+    define('DB_NAME', 'test');
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', 'root');
+    define('DB_DRIVER', '');
+    define('DB_CHARSET', 'utf8mb4');
+    define('ROOT', 'https://www.yourwebsite.com');
+    define('URLROOT', 'https://www.yourwebsite.com');
+}
+
+define('APPROOT', dirname(__DIR__) . '/app');
+define('APP_NAME', 'Test');
+define('APP_DESCRIPTION', 'Logements étudiants');
+define('DEBUG', true);

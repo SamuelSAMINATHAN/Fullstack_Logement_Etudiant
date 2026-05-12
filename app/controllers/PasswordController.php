@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class PasswordController extends Controller
 {
     private $utilisateurModel;
@@ -160,7 +164,7 @@ class PasswordController extends Controller
 
             $this->setFlash('success', 'Mot de passe réinitialisé avec succès !');
             $this->redirect('/auth/login');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la réinitialisation.');
             $this->redirect('/password/forgot');
         }

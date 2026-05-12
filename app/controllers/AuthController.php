@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Security;
+use App\Core\Session;
+use App\Core\Controller;
+
 class AuthController extends Controller
 {
     private $utilisateurModel;
@@ -71,11 +77,11 @@ class AuthController extends Controller
         }
 
         // Mettre à jour la dernière connexion
-        $this->utilisateurModel->updateLastLogin($user['idUtilisateur']);
+        $this->utilisateurModel->updateLastLogin($user['id'] ?? $user['idUtilisateur']);
 
         // Créer la session
         Session::regenerate();
-        Session::set('user_id', $user['idUtilisateur']);
+        Session::set('user_id', $user['id'] ?? $user['idUtilisateur']);
         Session::set('user_email', $user['email']);
         Session::set('user_nom', $user['nom']);
         Session::set('user_prenom', $user['prenom']);
@@ -194,7 +200,7 @@ class AuthController extends Controller
 
             $this->setFlash('success', 'Inscription réussie ! Veuillez vous connecter.');
             $this->redirect('/auth/login');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
             $this->redirect('/auth/register');
         }

@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class CandidatureController extends Controller
 {
     private $candidatureModel;
@@ -68,7 +72,7 @@ class CandidatureController extends Controller
 
             $this->setFlash('success', 'Candidature envoyée avec succès !');
             $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la candidature : ' . $e->getMessage());
             $this->redirect('/annonce/detail/' . $idAnnonce);
         }
@@ -163,7 +167,7 @@ class CandidatureController extends Controller
             $this->candidatureModel->updateApplicationStatus($idCandidature, $statut);
             $this->setFlash('success', 'Statut de la candidature mis à jour !');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la mise à jour.');
             $this->redirect('/');
         }
@@ -206,7 +210,7 @@ class CandidatureController extends Controller
             $this->candidatureModel->deleteApplication($idCandidature);
             $this->setFlash('success', 'Candidature supprimée.');
             $this->redirect($_SERVER['HTTP_REFERER'] ?? '/');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/');
         }

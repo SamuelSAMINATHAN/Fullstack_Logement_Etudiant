@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AdminContactController extends Controller
 {
     private $contactModel;
@@ -103,7 +107,7 @@ class AdminContactController extends Controller
             $this->contactModel->markAsProcessed($idContact);
             $this->setFlash('success', 'Message marqué comme traité.');
             $this->redirect('/admin/contact/view/' . $idContact);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors du traitement.');
             $this->redirect('/admin/contact');
         }
@@ -131,7 +135,7 @@ class AdminContactController extends Controller
             $this->contactModel->markAsUntreated($idContact);
             $this->setFlash('success', 'Message marqué comme non traité.');
             $this->redirect('/admin/contact');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la modification.');
             $this->redirect('/admin/contact');
         }
@@ -159,7 +163,7 @@ class AdminContactController extends Controller
             $this->contactModel->deleteMessage($idContact);
             $this->setFlash('success', 'Message supprimé.');
             $this->redirect('/admin/contact');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/admin/contact');
         }

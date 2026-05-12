@@ -33,9 +33,9 @@
                 <div class="col-md-4 mb-4">
                     <h5 class="fw-bold mb-3">Légal</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="<?php echo URLROOT; ?>/page/mentions-legales" class="text-muted text-decoration-none">Mentions légales</a></li>
+                        <li class="mb-2"><a href="<?php echo URLROOT; ?>/page/mentionsLegales" class="text-muted text-decoration-none">Mentions légales</a></li>
                         <li class="mb-2"><a href="<?php echo URLROOT; ?>/page/cgu" class="text-muted text-decoration-none">Conditions générales</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Politique de confidentialité</a></li>
+                        <li class="mb-2"><a href="<?php echo URLROOT; ?>/page/politiqueConfidentialite" class="text-muted text-decoration-none">Politique de confidentialité</a></li>
                         <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Politique de cookies</a></li>
                     </ul>
                 </div>

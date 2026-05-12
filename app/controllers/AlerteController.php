@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Controllers;
+
+use App\Core\Controller;
+
 class AlerteController extends Controller
 {
     private $alerteModel;
@@ -86,7 +90,7 @@ class AlerteController extends Controller
 
             $this->setFlash('success', 'Alerte créée avec succès !');
             $this->redirect('/alerte');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la création : ' . $e->getMessage());
             $this->redirect('/alerte/create');
         }
@@ -163,7 +167,7 @@ class AlerteController extends Controller
 
             $this->setFlash('success', 'Alerte mise à jour avec succès !');
             $this->redirect('/alerte');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
             $this->redirect('/alerte/edit/' . $idAlerte);
         }
@@ -191,7 +195,7 @@ class AlerteController extends Controller
             $this->alerteModel->deleteAlert($idAlerte);
             $this->setFlash('success', 'Alerte supprimée avec succès !');
             $this->redirect('/alerte');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/alerte');
         }
