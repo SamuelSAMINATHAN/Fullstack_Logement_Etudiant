@@ -61,9 +61,7 @@ class EtudiantModel extends Model
      */
     public function createStudent($idUtilisateur, $data)
     {
-        // S'assurer que l'ID utilisateur est présent
         $data['idUtilisateur'] = $idUtilisateur;
-
         return $this->create('etudiant', $data);
     }
 
@@ -90,39 +88,38 @@ class EtudiantModel extends Model
 
     /**
      * Enregistre un étudiant complet (utilisateur + étudiant)
-     * Utilise une transaction
-     * @param array $userDataData des données utilisateur
+     * @param array $userData Données utilisateur
      * @param array $studentData Données étudiantes
-     * @return int|false ID de l'étudiant en cas de succès, false sinon
+     * @return int|false ID de l'utilisateur en cas de succès, false sinon
      */
     public function registerStudent($userData, $studentData)
     {
-        try {
-            $this->beginTransaction();
+        // 1. Insérer dans la table 'utilisateur'
+        $sqlUser = "INSERT INTO utilisateur (nom, prenom, email, mdp, role, date_acceptation_cgu)
+                    VALUES (?, ?, ?, ?, ?, ?)";
 
-            // Créer l'utilisateur
-            $utilisateurModel = new UtilisateurModel();
-            $idUtilisateur = $utilisateurModel->createUser($userData);
+        $passwordHash = password_hash($userData['mdp'], PASSWORD_BCRYPT);
 
-            if (!$idUtilisateur) {
-                $this->rollBack();
-                return false;
-            }
+        $this->insert($sqlUser, [
+            $userData['nom'],
+            $userData['prenom'],
+            $userData['email'],
+            $passwordHash,
+            $userData['role'],
+            $userData['date_acceptation_cgu']
+        ]);
 
-            // Créer le profil étudiant
-            $studentData['idUtilisateur'] = $idUtilisateur;
-            $result = $this->create('etudiant', $studentData);
+        // 2. Récupérer l'ID généré
+        $userId = $this->lastInsertId();
 
-            if (!$result) {
-                $this->rollBack();
-                return false;
-            }
+        // 3. Insérer dans la table 'etudiant' avec cet ID
+        $sqlEtudiant = "INSERT INTO etudiant (idUtilisateur, dateNaissance, localisation) VALUES (?, ?, ?)";
+        $this->insert($sqlEtudiant, [
+            $userId,
+            $studentData['dateNaissance'],
+            $studentData['localisation']
+        ]);
 
-            $this->commit();
-            return $idUtilisateur;
-        } catch (\Exception $e) {
-            $this->rollBack();
-            return false;
-        }
+        return $userId;
     }
 }

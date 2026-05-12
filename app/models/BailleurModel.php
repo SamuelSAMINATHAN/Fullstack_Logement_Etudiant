@@ -69,9 +69,7 @@ class BailleurModel extends Model
      */
     public function createLandlord($idUtilisateur, $data = [])
     {
-        // S'assurer que l'ID utilisateur est présent
         $data['idUtilisateur'] = $idUtilisateur;
-
         return $this->create('bailleur', $data);
     }
 
@@ -138,40 +136,32 @@ class BailleurModel extends Model
 
     /**
      * Enregistre un bailleur complet (utilisateur + bailleur)
-     * Utilise une transaction
      * @param array $userData Données de l'utilisateur
-     * @param array $landlordData Données du bailleur (optionnel)
-     * @return int|false ID du bailleur en cas de succès, false sinon
+     * @return int|false ID de l'utilisateur en cas de succès, false sinon
      */
-    public function registerLandlord($userData, $landlordData = [])
+    public function registerLandlord($userData)
     {
-        try {
-            $this->beginTransaction();
+        // 1. Insertion utilisateur
+        $sqlUser = "INSERT INTO utilisateur (nom, prenom, email, mdp, role, date_acceptation_cgu)
+                    VALUES (?, ?, ?, ?, ?, ?)";
 
-            // Créer l'utilisateur avec le rôle bailleur
-            $userData['role'] = 'bailleur';
-            $utilisateurModel = new UtilisateurModel();
-            $idUtilisateur = $utilisateurModel->createUser($userData);
+        $passwordHash = password_hash($userData['mdp'], PASSWORD_BCRYPT);
 
-            if (!$idUtilisateur) {
-                $this->rollBack();
-                return false;
-            }
+        $this->insert($sqlUser, [
+            $userData['nom'],
+            $userData['prenom'],
+            $userData['email'],
+            $passwordHash,
+            $userData['role'],
+            $userData['date_acceptation_cgu']
+        ]);
 
-            // Créer le profil bailleur
-            $landlordData['idUtilisateur'] = $idUtilisateur;
-            $result = $this->create('bailleur', $landlordData);
+        $userId = $this->lastInsertId();
 
-            if (!$result) {
-                $this->rollBack();
-                return false;
-            }
+        // 2. Insertion bailleur
+        $sqlBailleur = "INSERT INTO bailleur (idUtilisateur) VALUES (?)";
+        $this->insert($sqlBailleur, [$userId]);
 
-            $this->commit();
-            return $idUtilisateur;
-        } catch (\Exception $e) {
-            $this->rollBack();
-            return false;
-        }
+        return $userId;
     }
 }

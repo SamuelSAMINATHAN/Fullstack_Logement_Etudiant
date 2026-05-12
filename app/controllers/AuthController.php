@@ -64,7 +64,9 @@ class AuthController extends Controller
 
         // Récupérer l'utilisateur par email
         $user = $this->utilisateurModel->getUserByEmail($email);
-
+        if (is_array($user) && isset($user[0])) {
+        $user = $user[0];
+}
         if (!$user || !Security::verifyPassword($password, $user['mdp'])) {
             $this->setFlash('error', 'Email ou mot de passe incorrect.');
             $this->redirect('/auth/login');
@@ -133,26 +135,14 @@ class AuthController extends Controller
         }
 
         // Récupérer les données
-        $nom = $post['nom'] ?? '';
-        $prenom = $post['prenom'] ?? '';
-        $email = $post['email'] ?? '';
+        $nom = trim($post['nom'] ?? '');
+        $prenom = trim($post['prenom'] ?? '');
+        $email = trim($post['email'] ?? '');
         $password = $post['password'] ?? '';
         $password_confirm = $post['password_confirm'] ?? '';
         $role = $post['role'] ?? '';
         $dateNaissance = $post['dateNaissance'] ?? null;
-        $localisation = $post['localisation'] ?? null;
-
-        // Valider les données obligatoires
-        if (empty($nom) || empty($prenom) || empty($email) || empty($password) || empty($role)) {
-            $this->setFlash('error', 'Tous les champs obligatoires doivent être remplis.');
-            $this->redirect('/auth/register');
-        }
-
-        // Valider l'email
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->setFlash('error', 'Email invalide.');
-            $this->redirect('/auth/register');
-        }
+        $localisation = trim($post['localisation'] ?? '');
 
         // Valider le rôle
         if (!in_array($role, ['etudiant', 'bailleur'])) {
@@ -160,25 +150,52 @@ class AuthController extends Controller
             $this->redirect('/auth/register');
         }
 
+        // Déterminer l'URL de redirection en cas d'erreur
+        $redirectUrl = '/auth/register/' . $role;
+
+        // Valider les données obligatoires
+        if (empty($nom) || empty($prenom) || empty($email) || empty($password)) {
+            $this->setFlash('error', 'Tous les champs obligatoires doivent être remplis.');
+            $this->redirect($redirectUrl);
+        }
+
+        // Valider l'email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->setFlash('error', 'Email invalide.');
+            $this->redirect($redirectUrl);
+        }
+
         // Vérifier la correspondance des mots de passe
         if ($password !== $password_confirm) {
             $this->setFlash('error', 'Les mots de passe ne correspondent pas.');
-            $this->redirect('/auth/register');
+            $this->redirect($redirectUrl);
         }
 
         // Vérifier la longueur du mot de passe
         if (strlen($password) < 8) {
             $this->setFlash('error', 'Le mot de passe doit contenir au moins 8 caractères.');
-            $this->redirect('/auth/register');
+            $this->redirect($redirectUrl);
+        }
+
+        // Valider les champs spécifiques aux étudiants
+        if ($role === 'etudiant') {
+            if (empty($dateNaissance)) {
+                $this->setFlash('error', 'La date de naissance est obligatoire.');
+                $this->redirect($redirectUrl);
+            }
+            if (empty($localisation)) {
+                $this->setFlash('error', 'La localisation est obligatoire.');
+                $this->redirect($redirectUrl);
+            }
         }
 
         // Vérifier l'unicité de l'email
         if (!$this->utilisateurModel->isEmailUnique($email)) {
             $this->setFlash('error', 'Cet email est déjà utilisé.');
-            $this->redirect('/auth/register');
+            $this->redirect($redirectUrl);
         }
 
-        // Préparer les données utilisateur
+        // Préparer les données utilisateur avec les bons noms de colonnes
         $userData = [
             'nom' => $nom,
             'prenom' => $prenom,
@@ -188,12 +205,19 @@ class AuthController extends Controller
             'date_acceptation_cgu' => date('Y-m-d H:i:s')
         ];
 
-        // Enregistrer selon le rôle
+        // Enregistrer selon le rôle avec gestion d'exception robuste
         try {
             if ($role === 'etudiant') {
+                // Valider le format de la date
+                $dateObj = \DateTime::createFromFormat('Y-m-d', $dateNaissance);
+                if (!$dateObj || $dateObj->format('Y-m-d') !== $dateNaissance) {
+                    $this->setFlash('error', 'Format de date de naissance invalide.');
+                    $this->redirect($redirectUrl);
+                }
+                
                 $studentData = [
-                    'dateNaissance' => $dateNaissance ?: null,
-                    'localisation' => $localisation ?: null
+                    'dateNaissance' => $dateNaissance,
+                    'localisation' => $localisation
                 ];
                 $userId = $this->etudiantModel->registerStudent($userData, $studentData);
             } else {
@@ -201,15 +225,26 @@ class AuthController extends Controller
             }
 
             if (!$userId) {
-                $this->setFlash('error', 'Erreur lors de l\'inscription.');
-                $this->redirect('/auth/register');
+                $this->setFlash('error', 'Erreur lors de l\'inscription. Veuillez réessayer.');
+                $this->redirect($redirectUrl);
             }
 
             $this->setFlash('success', 'Inscription réussie ! Veuillez vous connecter.');
             $this->redirect('/auth/login');
+        } catch (\PDOException $e) {
+            // Gérer les erreurs SQL spécifiques
+            if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                $this->setFlash('error', 'Cet email est déjà utilisé.');
+            } elseif (strpos($e->getMessage(), 'NOT NULL') !== false) {
+                $this->setFlash('error', 'Un champ obligatoire est manquant.');
+            } else {
+                $this->setFlash('error', 'Erreur base de données : ' . $e->getMessage());
+            }
+            $this->redirect($redirectUrl);
         } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de l\'inscription : ' . $e->getMessage());
-            $this->redirect('/auth/register');
+            error_log('Erreur inscription: ' . $e->getMessage());
+            $this->setFlash('error', 'Erreur lors de l\'inscription. Veuillez contacter le support si le problème persiste.');
+            $this->redirect($redirectUrl);
         }
     }
 

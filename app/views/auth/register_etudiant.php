@@ -1,105 +1,179 @@
+<script src="https://cdn.tailwindcss.com"></script>
 <?php require APPROOT . '/views/layout/header.php'; ?>
 
-<style>
-    :root {
-        --dorocho-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --dorocho-teal: #00a699;
-    }
-    .hero-reg {
-        background: var(--dorocho-gradient);
-        padding: 50px 0 80px 0;
-        color: white;
-        text-align: center;
-        border-radius: 0 0 50px 50px;
-    }
-    .auth-card {
-        margin-top: -60px;
-        border: none;
-        border-radius: 24px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-    .btn-dorocho {
-        background-color: var(--dorocho-teal);
-        color: white;
-        border-radius: 50px;
-        padding: 12px;
-        font-weight: 600;
-        border: none;
-        transition: 0.3s;
-    }
-    .btn-dorocho:hover { background-color: #00847a; transform: translateY(-2px); }
-</style>
-
-<div class="hero-reg">
-    <div class="container">
-        <h1 class="fw-bold">Rejoindre Dorocho ✨</h1>
-        <p class="opacity-75">Créez votre profil étudiant pour trouver votre futur chez-vous.</p>
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Inscription Étudiant
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+            Créez votre compte pour accéder aux annonces de logement
+        </p>
     </div>
-</div>
 
-<div class="container mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card auth-card p-4">
-                <div class="card-body">
-                    <?php if (isset($_SESSION['flash'])): ?>
-                        <?php foreach ($_SESSION['flash'] as $type => $message): ?>
-                            <div class="alert alert-<?= $type === 'error' ? 'danger' : 'success' ?> shadow-sm"><?= $message ?></div>
-                        <?php endforeach; unset($_SESSION['flash']); ?>
-                    <?php endif; ?>
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <?php if (isset($_SESSION['flash'])): ?>
+                <?php if ($_SESSION['flash']['type'] === 'error'): ?>
+                    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        <?= $_SESSION['flash']['message'] ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
 
-                    <form action="<?= URLROOT ?>/auth/registerHandler" method="POST">
-                        <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?>">
-                        <input type="hidden" name="role" value="etudiant">
+            <form class="space-y-6" action="<?php echo URLROOT; ?>/auth/registerHandler" method="POST">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                <input type="hidden" name="role" value="etudiant">
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Prénom</label>
-                                <input type="text" name="prenom" class="form-control rounded-3" placeholder="Ex: Lucas" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Nom</label>
-                                <input type="text" name="nom" class="form-control rounded-3" placeholder="Ex: Martin" required>
-                            </div>
+                <!-- Informations personnelles -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-900">Informations personnelles</h3>
+
+                    <div>
+                        <label for="nom" class="block text-sm font-medium text-gray-700">
+                            Nom <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="nom" name="nom" type="text" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   placeholder="Votre nom">
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small">Adresse Email</label>
-                            <input type="email" name="email" class="form-control rounded-3" placeholder="nom@etudiant.univ.fr" required>
+                    <div>
+                        <label for="prenom" class="block text-sm font-medium text-gray-700">
+                            Prénom <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="prenom" name="prenom" type="text" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   placeholder="Votre prénom">
                         </div>
+                    </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Date de naissance</label>
-                                <input type="date" name="dateNaissance" class="form-control rounded-3">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Ville de recherche</label>
-                                <input type="text" name="localisation" class="form-control rounded-3" placeholder="Ex: Paris, Lyon...">
-                            </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">
+                            Email <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="email" name="email" type="email" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   placeholder="votre.email@exemple.com">
                         </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Mot de passe</label>
-                                <input type="password" name="password" class="form-control rounded-3" minlength="8" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold text-muted small">Confirmer le mot de passe</label>
-                                <input type="password" name="password_confirm" class="form-control rounded-3" required>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-dorocho w-100 shadow-sm mb-3">Créer mon compte étudiant</button>
-                    </form>
-
-                    <div class="text-center mt-3">
-                        <p class="text-muted small">Vous avez déjà un compte ? <a href="<?= URLROOT ?>/auth/login" class="text-decoration-none fw-bold" style="color: #764ba2;">Connectez-vous</a></p>
                     </div>
                 </div>
-            </div>
+
+                <!-- Informations étudiant -->
+                <div class="space-y-4 pt-4 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Informations étudiant</h3>
+
+                    <div>
+                        <label for="dateNaissance" class="block text-sm font-medium text-gray-700">
+                            Date de naissance <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="dateNaissance" name="dateNaissance" type="date" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   max="<?php echo date('Y-m-d', strtotime('-16 years')); ?>">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="localisation" class="block text-sm font-medium text-gray-700">
+                            Localisation souhaitée <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="localisation" name="localisation" type="text" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   placeholder="Ex: Paris, Lyon, Marseille...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mot de passe -->
+                <div class="space-y-4 pt-4 border-t border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Mot de passe</h3>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">
+                            Mot de passe <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="password" name="password" type="password" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   placeholder="Min. 8 caractères">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="password_confirm" class="block text-sm font-medium text-gray-700">
+                            Confirmer le mot de passe <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input id="password_confirm" name="password_confirm" type="password" required
+                                   class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                   placeholder="Répétez le mot de passe">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CGU -->
+                <div class="space-y-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center">
+                        <input id="cgu" name="cgu" type="checkbox" required
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="cgu" class="ml-2 block text-sm text-gray-900">
+                            J'accepte les <a href="<?php echo URLROOT; ?>/page/cgu" class="text-blue-600 hover:text-blue-500">conditions générales d'utilisation</a> <span class="text-red-500">*</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        S'inscrire
+                    </button>
+                </div>
+
+                <div class="text-sm text-center">
+                    <span class="text-gray-600">Pas étudiant ?</span>
+                    <a href="<?php echo URLROOT; ?>/auth/register/bailleur" class="font-medium text-green-600 hover:text-green-500">
+                        S'inscrire comme bailleur
+                    </a>
+                </div>
+
+                <div class="text-sm text-center">
+                    <span class="text-gray-600">Vous avez déjà un compte ?</span>
+                    <a href="<?php echo URLROOT; ?>/auth/login" class="font-medium text-blue-600 hover:text-blue-500">
+                        Se connecter
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('password_confirm').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const passwordConfirm = this.value;
+
+    if (password !== passwordConfirm) {
+        this.setCustomValidity('Les mots de passe ne correspondent pas');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    const passwordConfirm = document.getElementById('password_confirm').value;
+
+    if (this.value !== passwordConfirm && passwordConfirm !== '') {
+        document.getElementById('password_confirm').setCustomValidity('Les mots de passe ne correspondent pas');
+    } else {
+        document.getElementById('password_confirm').setCustomValidity('');
+    }
+});
+</script>
 
 <?php require APPROOT . '/views/layout/footer.php'; ?>
