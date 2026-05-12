@@ -5,7 +5,6 @@
         --dorocho-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         --dorocho-teal: #00a699;
     }
-
     .hero-auth {
         background: var(--dorocho-gradient);
         padding: 50px 0 80px 0;
@@ -13,14 +12,12 @@
         text-align: center;
         border-radius: 0 0 50px 50px;
     }
-
     .auth-card {
         margin-top: -50px;
         border: none;
         border-radius: 20px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
-
     .btn-teal {
         background-color: var(--dorocho-teal);
         color: white;
@@ -30,17 +27,12 @@
         border: none;
         transition: 0.3s;
     }
-
-    .btn-teal:hover {
-        background-color: #00847a;
-        transform: translateY(-2px);
-    }
 </style>
 
 <section class="hero-auth">
     <div class="container">
         <h1 class="fw-bold">Dorocho</h1>
-        <p class="lead opacity-75">Retrouvez l'accès à votre compte</p>
+        <p class="lead opacity-75">Sécurisez votre compte</p>
     </div>
 </section>
 
@@ -49,8 +41,8 @@
         <div class="col-md-5">
             <div class="card auth-card p-4">
                 <div class="card-body">
-                    <h3 class="text-center mb-4">Mot de passe oublié</h3>
-                    
+                    <h3 class="text-center mb-4">Nouveau mot de passe</h3>
+
                     <?php if (isset($_SESSION['flash'])): ?>
                         <?php foreach ($_SESSION['flash'] as $type => $message): ?>
                             <div class="alert alert-<?= $type === 'error' ? 'danger' : 'success' ?> alert-dismissible fade show">
@@ -60,24 +52,24 @@
                         <?php endforeach; unset($_SESSION['flash']); ?>
                     <?php endif; ?>
 
-                    <form action="<?= URLROOT ?>/password/forgotHandler" method="POST">
+                    <form action="<?= URLROOT ?>/password/resetHandler" method="POST">
                         <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?>">
-                        
+                        <input type="hidden" name="token" value="<?= $data['token'] ?>">
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Nouveau mot de passe</label>
+                            <input type="password" name="password" class="form-control form-control-lg" placeholder="8 caractères minimum" required>
+                        </div>
+
                         <div class="mb-4">
-                            <label class="form-label text-muted small fw-bold text-uppercase">Votre adresse email</label>
-                            <input type="email" name="email" class="form-control form-control-lg rounded-3" placeholder="exemple@univ.fr" required>
+                            <label class="form-label text-muted small fw-bold">Confirmez le mot de passe</label>
+                            <input type="password" name="password_confirm" class="form-control form-control-lg" placeholder="Répétez le mot de passe" required>
                         </div>
 
                         <button type="submit" class="btn btn-teal w-100 shadow-sm">
-                            Envoyer le lien de secours
+                            Mettre à jour mon mot de passe
                         </button>
                     </form>
-
-                    <div class="text-center mt-4">
-                        <a href="<?= URLROOT ?>/auth/login" class="text-decoration-none" style="color: #764ba2;">
-                            <i class="fas fa-arrow-left me-1"></i> Retour à la connexion
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>

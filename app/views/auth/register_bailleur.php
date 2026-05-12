@@ -1,0 +1,87 @@
+<?php require APPROOT . '/views/layout/header.php'; ?>
+
+<style>
+    :root {
+        --dorocho-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --dorocho-teal: #00a699;
+    }
+    .hero-reg {
+        background: var(--dorocho-gradient);
+        padding: 50px 0 80px 0;
+        color: white;
+        text-align: center;
+        border-radius: 0 0 50px 50px;
+    }
+    .auth-card {
+        margin-top: -60px;
+        border: none;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .btn-dorocho {
+        background-color: var(--dorocho-teal);
+        color: white;
+        border-radius: 50px;
+        padding: 12px;
+        font-weight: 600;
+        border: none;
+    }
+</style>
+
+<div class="hero-reg">
+    <div class="container">
+        <h1 class="fw-bold">Espace Bailleur 🏠</h1>
+        <p class="opacity-75">Publiez vos annonces et gérez vos locataires en toute simplicité.</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card auth-card p-4">
+                <div class="card-body">
+                    <?php if (isset($_SESSION['flash'])): ?>
+                        <?php foreach ($_SESSION['flash'] as $type => $message): ?>
+                            <div class="alert alert-<?= $type === 'error' ? 'danger' : 'success' ?>"><?= $message ?></div>
+                        <?php endforeach; unset($_SESSION['flash']); ?>
+                    <?php endif; ?>
+
+                    <form action="<?= URLROOT ?>/auth/registerHandler" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?>">
+                        <input type="hidden" name="role" value="bailleur">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Prénom</label>
+                                <input type="text" name="prenom" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-muted small">Nom</label>
+                                <input type="text" name="nom" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="votre@email.com" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Mot de passe</label>
+                            <input type="password" name="password" class="form-control" minlength="8" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-muted small">Confirmer le mot de passe</label>
+                            <input type="password" name="password_confirm" class="form-control" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-dorocho w-100 shadow-sm mb-3">S'inscrire comme Bailleur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php require APPROOT . '/views/layout/footer.php'; ?>
