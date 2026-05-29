@@ -111,4 +111,5 @@
     </div>
 </div>
 
+<script src="<?php echo URLROOT; ?>/public/js/dashboard.js"></script>
 <?php require APPROOT . '/views/layout/footer.php'; ?>

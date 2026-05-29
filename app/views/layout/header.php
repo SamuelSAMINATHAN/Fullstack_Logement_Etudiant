@@ -11,7 +11,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Unified Stylesheet -->
-    <link rel="stylesheet" href="http://localhost:8888/test/public/css/styles.css">
+    <link rel="stylesheet" href="<?php echo ROOT; ?>/css/styles.css">
+    
+    <!-- Configuration URLs globales pour JavaScript -->
+    <script>
+        const APP_CONFIG = {
+            ROOT: '<?php echo ROOT; ?>',
+            URLROOT: '<?php echo URLROOT; ?>',
+            API_URL: '<?php echo ROOT; ?>/annonce/apisearch'
+        };
+    </script>
 </head>
 <body>
     <!-- Navigation -->

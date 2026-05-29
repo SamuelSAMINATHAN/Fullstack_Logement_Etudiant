@@ -147,15 +147,17 @@ body {
 /* Dropdown */
 
 .dropdown-menu-custom {
+    display: none; /* Caché par défaut */
     border: none;
-
     border-radius: 16px;
-
     padding: 10px;
-
     box-shadow: var(--shadow-lg);
-
     margin-top: 12px;
+}
+
+/* Force l'affichage uniquement quand Bootstrap ajoute la classe .show */
+.dropdown-menu-custom.show {
+    display: block !important;
 }
 
 .dropdown-menu-custom .dropdown-item {

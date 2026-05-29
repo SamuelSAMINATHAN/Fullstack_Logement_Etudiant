@@ -30,7 +30,7 @@
 
     <!-- Contenu principal -->
     <div class="col-md-9">
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-4" id="section-infos">
             <div class="card-header bg-white">
                 <h4 class="mb-0">Mon Profil</h4>
             </div>
@@ -80,7 +80,17 @@
                 </form>
             </div>
         </div>
+
+        <div class="card shadow-sm" id="section-messages" style="display:none;">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Mes Messages</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted text-center my-4">Vous n'avez pas encore de conversations.</p>
+            </div>
+        </div>
     </div>
 </div>
 
+<script src="<?php echo URLROOT; ?>/public/js/dashboard.js"></script>
 <?php require APPROOT . '/views/layout/footer.php'; ?>

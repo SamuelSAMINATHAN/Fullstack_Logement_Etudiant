@@ -1,5 +1,5 @@
 // Configuration - Le chemin vers mon fichier API
-const API_URL = 'http://localhost:8888/test/public/annonce/apisearch';   
+const API_URL = APP_CONFIG?.API_URL || 'http://localhost:8888/test/public/annonce/apisearch';   
 let allListings = [];                   // Tous les logements chargés
 let currentPage = 1;                    // Page où on se trouve (1 par défaut)
 const itemsPerPage = 6;                 // 6 annonces par page
