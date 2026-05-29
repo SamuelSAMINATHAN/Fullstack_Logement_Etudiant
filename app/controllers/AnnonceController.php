@@ -26,7 +26,7 @@ class AnnonceController extends Controller
     /**
      * Liste toutes les annonces
      */
-    public function index()
+    public function home()
     {
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $filters = [];
@@ -301,5 +301,58 @@ class AnnonceController extends Controller
             $this->setFlash('error', 'Erreur lors de la suppression.');
             $this->redirect('/annonce/detail/' . $idAnnonce);
         }
+    }
+
+   /**
+     * Endpoint API pour la recherche asynchrone (AJAX)
+     * URL ciblée : http://localhost:8888/test/public/annonce/apisearch
+     */
+    public function apisearch()
+    {
+        // Supprime tout affichage parasite précédent (au cas où)
+        if (ob_get_length()) ob_clean();
+
+        // Force l'entête JSON
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            // Ton routeur ne remplit pas $_GET['url'] pour les filtres, 
+            // mais les filtres classiques restent accessibles dans $_GET.
+            $filters = $_GET;
+
+            // On appelle TA méthode de recherche dans ton modèle
+            $annonces = $this->annonceModel->searchAnnouncements($filters);
+
+            // On ajoute la photo principale attendue par le JS de ton pote
+            foreach ($annonces as &$annonce) {
+                // Gestion de la clé selon ta structure de table (id ou idAnnonce)
+                $id = $annonce['idAnnonce'] ?? $annonce['id'] ?? null;
+                
+                if ($id) {
+                    $photos = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
+                    // Si une photo existe, on prend son chemin, sinon l'image par défaut de Picsum
+                    $annonce['photo'] = (!empty($photos)) ? $photos[0]['chemin_photo'] : 'https://picsum.photos/id/106/400/300';
+                } else {
+                    $annonce['photo'] = 'https://picsum.photos/id/106/400/300';
+                }
+            }
+
+            // On renvoie exactement le format que son main.js attend
+            echo json_encode([
+                'success' => true,
+                'data'    => $annonces,
+                'count'   => count($annonces)
+            ]);
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error'   => 'Erreur MVC : ' . $e->getMessage()
+            ]);
+        }
+        
+        // On stoppe l'exécution pour que le routeur ne tente pas d'afficher autre chose
+        exit;
     }
 }

@@ -155,7 +155,7 @@ class ProfilController extends Controller
 
         $currentPassword = $post['current_password'] ?? '';
         $newPassword = $post['new_password'] ?? '';
-        $confirmPassword = $post['confirm_password'] ?? '';
+        $confirmPassword = $post['password_confirm'] ?? '';
 
         if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
             $this->setFlash('error', 'Tous les champs sont obligatoires.');

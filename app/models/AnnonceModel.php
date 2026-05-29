@@ -76,50 +76,121 @@ class AnnonceModel extends Model
     }
 
     /**
-     * Recherche avancée d'annonces
-     * @param array $filters Filtres : localisation, prix_min, prix_max, type_logement, meuble, estColocation
+     * Recherche avancée d'annonces avec tous les filtres
+     * @param array $filters Filtres : search, price_max, surface_min, types, rooms, meuble, ascenseur, parking, balcony, animaux, pmr
      * @return array
      */
     public function searchAnnouncements($filters = [])
     {
-        $db = $this;
-        $query = "SELECT * FROM annonce WHERE 1=1";
+        $sql = "SELECT a.*, u.nom, u.prenom, u.email 
+                FROM annonce a 
+                JOIN utilisateur u ON a.idUtilisateur = u.idUtilisateur 
+                WHERE a.statut = 'active'";
+        
         $params = [];
-
+        
+        // Filtre par recherche (titre, description, localisation)
+        if (!empty($filters['search'])) {
+            $sql .= " AND (a.titre LIKE ? OR a.description LIKE ? OR a.localisation LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+        
+        // Filtre par localisation (compatibilité ancienne version)
         if (!empty($filters['localisation'])) {
-            $query .= " AND localisation LIKE :localisation";
-            $params['localisation'] = '%' . $filters['localisation'] . '%';
+            $sql .= " AND a.localisation LIKE ?";
+            $params[] = '%' . $filters['localisation'] . '%';
         }
-
+        
+        // Filtre par prix maximum
+        if (isset($filters['prix_max']) || !empty($filters['price_max'])) {
+            $priceMax = $filters['price_max'] ?? $filters['prix_max'];
+            $sql .= " AND a.prix <= ?";
+            $params[] = $priceMax;
+        }
+        
+        // Filtre par prix minimum
         if (isset($filters['prix_min'])) {
-            $query .= " AND prix >= :prix_min";
-            $params['prix_min'] = $filters['prix_min'];
+            $sql .= " AND a.prix >= ?";
+            $params[] = $filters['prix_min'];
         }
-
-        if (isset($filters['prix_max'])) {
-            $query .= " AND prix <= :prix_max";
-            $params['prix_max'] = $filters['prix_max'];
+        
+        // Filtre par surface minimum
+        if (!empty($filters['surface_min'])) {
+            $sql .= " AND a.surface >= ?";
+            $params[] = $filters['surface_min'];
         }
-
+        
+        // Filtre par nombre de pièces
+        if (!empty($filters['rooms']) && $filters['rooms'] !== '0') {
+            $sql .= " AND a.nbPieces = ?";
+            $params[] = $filters['rooms'];
+        }
+        
+        // Filtres par type (individuel, couple, colocation)
+        if (!empty($filters['types'])) {
+            $types = explode(',', $filters['types']);
+            $typeConditions = [];
+            foreach ($types as $type) {
+                switch ($type) {
+                    case 'individuel':
+                        $typeConditions[] = "(a.estColocation = 0 AND a.nbPieces = 1)";
+                        break;
+                    case 'couple':
+                        $typeConditions[] = "(a.estColocation = 0 AND a.nbPieces >= 2)";
+                        break;
+                    case 'colocation':
+                        $typeConditions[] = "a.estColocation = 1";
+                        break;
+                }
+            }
+            if (!empty($typeConditions)) {
+                $sql .= " AND (" . implode(' OR ', $typeConditions) . ")";
+            }
+        }
+        
+        // Filtre par type de logement (compatibilité ancienne version)
         if (!empty($filters['type_logement'])) {
-            $query .= " AND type_logement = :type_logement";
-            $params['type_logement'] = $filters['type_logement'];
+            $sql .= " AND a.type_logement = ?";
+            $params[] = $filters['type_logement'];
         }
-
-        if (isset($filters['meuble'])) {
-            $query .= " AND meuble = :meuble";
-            $params['meuble'] = $filters['meuble'];
+        
+        // Filtres par équipements
+        if (isset($filters['meuble']) || !empty($filters['meuble'])) {
+            $sql .= " AND a.meuble = 1";
         }
-
+        
+        if (!empty($filters['ascenseur'])) {
+            $sql .= " AND a.ascenseur = 1";
+        }
+        
+        if (!empty($filters['parking'])) {
+            $sql .= " AND a.parking = 1";
+        }
+        
+        if (!empty($filters['balcony'])) {
+            $sql .= " AND a.balcon = 1";
+        }
+        
+        if (!empty($filters['animaux'])) {
+            $sql .= " AND a.animaux = 1";
+        }
+        
+        if (!empty($filters['pmr'])) {
+            $sql .= " AND a.pmr = 1";
+        }
+        
+        // Filtre par colocation (compatibilité ancienne version)
         if (isset($filters['estColocation'])) {
-            $query .= " AND estColocation = :estColocation";
-            $params['estColocation'] = $filters['estColocation'];
+            $sql .= " AND a.estColocation = ?";
+            $params[] = $filters['estColocation'];
         }
-
-        $query .= " ORDER BY datePublication DESC";
-
-        $stmt = $db->query($query, $params);
-        return $stmt ?? [];
+        
+        $sql .= " ORDER BY a.date_creation DESC";
+        
+        return $this->select($sql, $params);
     }
 
     /**

@@ -90,14 +90,14 @@ $params = $urlParams ? array_values($urlParams) : [];
 // Appel de la méthode du contrôleur avec les paramètres
 try {
     call_user_func_array([$controller, $actionName], $params);
+// Tout en bas de ton public/index.php :
+
 } catch (\Throwable $e) {
-    // Gestion basique des erreurs
-    error_log($e->getMessage());
-    http_response_code(500);
-    echo "<h1>Erreur interne du serveur</h1>";
-    if (defined('APP_DEBUG') && APP_DEBUG === true) {
-        echo "<pre>" . htmlspecialchars($e->getMessage()) . "</pre>";
-    } else {
-        echo "<p>Une erreur inattendue est survenue. Veuillez réessayer plus tard.</p>";
-    }
+    // On force l'affichage sauvage du vrai problème :
+    echo "<h1>BORDEL DE MERDE, VOILÀ L'ERREUR :</h1>";
+    echo "<p><strong>Message :</strong> " . $e->getMessage() . "</p>";
+    echo "<p><strong>Fichier :</strong> " . $e->getFile() . " à la ligne " . $e->getLine() . "</p>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
+    exit; // On coupe tout ici
+
 }
