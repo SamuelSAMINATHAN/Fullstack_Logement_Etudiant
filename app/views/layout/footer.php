@@ -22,3 +22,9 @@
         <p>&copy; 2026 Dorocho - Tous droits réservés</p>
     </div>
 </footer>
+    </main>
+
+    <!-- Bootstrap 5 JS Bundle (inclut Popper.js nécessaire pour les dropdowns) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
