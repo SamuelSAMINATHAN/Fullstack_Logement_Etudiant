@@ -56,5 +56,5 @@
     </div>
 </div>
 
-<script src="<?php echo URLROOT; ?>/public/js/dashboard.js"></script>
+<script src="<?php echo URLROOT; ?>/js/dashboard.js"></script>
 <?php require APPROOT . '/views/layout/footer.php'; ?>

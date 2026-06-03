@@ -201,7 +201,7 @@ class AnnonceController extends Controller
             if ($idAnnonce) {
                 // 2. Gestion de l'upload de la photo
                 if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                    $targetDir = dirname(dirname(__DIR__)) . "/public/uploads/annonces/";
+                    $targetDir = dirname(dirname(__DIR__)) . "/uploads/annonces/";
                     if (!is_dir($targetDir)) {
                         mkdir($targetDir, 0755, true);
                     }
@@ -266,7 +266,7 @@ class AnnonceController extends Controller
                 if ($this->annonceModel->updateAnnouncement($id, $data)) {
                     // Gestion de l'upload de la photo lors de la modification
                     if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                        $targetDir = dirname(dirname(__DIR__)) . "/public/uploads/annonces/";
+                        $targetDir = dirname(dirname(__DIR__)) . "/uploads/annonces/";
                         if (!is_dir($targetDir)) {
                             mkdir($targetDir, 0755, true);
                         }

@@ -7,8 +7,8 @@
     --primary-dark: #006a5f;
     --primary-light: #e8f5f2;
 
-    --secondary: #77A6F7;
-    --secondary-dark: #5a8fd9;
+    --secondary: #26A69A;
+    --secondary-dark: #00897B;
 
     --dark: #2c3e50;
     --gray: #6c757d;
@@ -21,6 +21,14 @@
 
     --transition: all 0.3s ease;
 }
+
+/* Surcharge Bootstrap */
+.text-primary { color: var(--secondary) !important; }
+.btn-primary { 
+    background-color: var(--secondary) !important; 
+    border-color: var(--secondary) !important; 
+}
+.bg-primary { background-color: var(--secondary) !important; }
 
 /* ========================================
    GLOBAL

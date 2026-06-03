@@ -13,7 +13,7 @@ if($_SERVER['SERVER_NAME'] == 'localhost')
     // À adapter selon votre configuration locale
     // Exemple pour MAMP: http://localhost:8888/test
     // Exemple pour XAMPP: http://localhost/test
-    define('ROOT', 'http://localhost:8888/test/public');
+    define('ROOT', 'http://localhost:8888/test');
     
     define('URLROOT', 'http://localhost:8888/test');
 

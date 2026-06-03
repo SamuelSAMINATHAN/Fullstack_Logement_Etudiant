@@ -12,8 +12,8 @@
     --primary: #00887A;
     --primary-dark: #006a5f;
     --primary-light: #e8f5f2;
-    --secondary: #77A6F7;
-    --secondary-dark: #5a8fd9;
+    --secondary: #26A69A;
+    --secondary-dark: #00897B;
     --dark: #2c3e50;
     --gray: #6c757d;
     --light-gray: #f8f9fa;
@@ -23,6 +23,42 @@
     --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
     --shadow-hover: 0 12px 28px rgba(0,0,0,0.12);
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Surcharge des couleurs primaires de Bootstrap et classes utilitaires (initialement bleues) */
+.text-primary, .text-blue-600 {
+    color: var(--secondary) !important;
+}
+
+.hover\:text-blue-500:hover {
+    color: var(--secondary-dark) !important;
+}
+
+.btn-primary, .bg-primary, .bg-blue-600 {
+    background-color: var(--secondary) !important;
+}
+
+.btn-primary {
+    border-color: var(--secondary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover, .hover\:bg-blue-700:hover {
+    background-color: var(--secondary-dark) !important;
+    border-color: var(--secondary-dark) !important;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.focus\:ring-blue-500:focus {
+    box-shadow: 0 0 0 3px var(--primary-light) !important;
+}
+
+.focus\:border-blue-500:focus {
+    border-color: var(--secondary) !important;
 }
 
 /* ========================================
@@ -448,7 +484,7 @@ main.container {
 /* Liens */
 .min-h-screen a.text-blue-600,
 .min-h-screen a.font-medium.text-blue-600 {
-    color: var(--primary) !important;
+    color: var(--secondary) !important;
     text-decoration: none;
     font-weight: 600;
     transition: var(--transition);
@@ -456,7 +492,7 @@ main.container {
 
 .min-h-screen a.text-blue-600:hover,
 .min-h-screen a.font-medium.text-blue-600:hover {
-    color: var(--primary-dark) !important;
+    color: var(--secondary-dark) !important;
     text-decoration: underline;
 }
 

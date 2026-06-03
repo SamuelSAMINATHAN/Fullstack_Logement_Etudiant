@@ -110,7 +110,7 @@
 /* Liens hypertexte (CGU, connexion...) */
 .min-h-screen a.text-blue-600,
 .min-h-screen a.font-medium.text-blue-600 {
-    color: var(--primary) !important;
+    color: var(--secondary) !important;
     text-decoration: none;
     font-weight: 600;
     transition: var(--transition);
@@ -118,7 +118,7 @@
 
 .min-h-screen a.text-blue-600:hover,
 .min-h-screen a.font-medium.text-blue-600:hover {
-    color: var(--primary-dark) !important;
+    color: var(--secondary-dark) !important;
     text-decoration: underline;
 }
 

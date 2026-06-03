@@ -20,7 +20,7 @@ if($_SERVER['SERVER_NAME'] == 'localhost')
     define('DB_DRIVER', '');
     define('DB_CHARSET', 'utf8mb4');
 
-    define('ROOT', ($_ENV['APP_URL'] ?? 'http://localhost:8888/test') . '/public');
+    define('ROOT', $_ENV['APP_URL'] ?? 'http://localhost:8888/test');
     
     define('URLROOT', $_ENV['APP_URL'] ?? 'http://localhost:8888/test');
 

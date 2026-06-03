@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 session_start();
 
 // Chargement de la configuration
-require_once dirname(__DIR__) . '/config/config.php';
+require_once __DIR__ . '/config/config.php';
 
 // PSR-4 Autoloader universel (insensible à la casse pour dossiers, respecte la casse pour fichiers)
 spl_autoload_register(function ($className) {
@@ -33,7 +33,7 @@ spl_autoload_register(function ($className) {
     
     // Construire le chemin du fichier
     // Dossiers en minuscules + nom de fichier original
-    $file = dirname(__DIR__) . '/app/' . strtolower($folder) . '/' . implode('/', $parts) . '.php';
+    $file = __DIR__ . '/app/' . strtolower($folder) . '/' . implode('/', $parts) . '.php';
 
     if (file_exists($file)) {
         require_once $file;
@@ -41,7 +41,7 @@ spl_autoload_register(function ($className) {
 });
 
 // Analyse de l'URL pour le routage MVC
-// Format attendu (via .htaccess) : /public/index.php?url=controller/action/param1/param2
+// Format attendu (via nginx) : /index.php?url=controller/action/param1/param2
 $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
 $url = filter_var($url, FILTER_SANITIZE_URL);
 $urlParams = explode('/', $url);
@@ -51,7 +51,7 @@ $urlParams = explode('/', $url);
 $controllerName = 'PageController';
 if (!empty($urlParams[0])) {
     $requestedController = ucfirst(strtolower($urlParams[0])) . 'Controller';
-    $controllerFile = dirname(__DIR__) . '/app/controllers/' . $requestedController . '.php';
+    $controllerFile = __DIR__ . '/app/controllers/' . $requestedController . '.php';
     if (file_exists($controllerFile)) {
         $controllerName = $requestedController;
         unset($urlParams[0]);
@@ -59,7 +59,7 @@ if (!empty($urlParams[0])) {
 }
 
 // Chargement du fichier du contrôleur
-$controllerPath = dirname(__DIR__) . '/app/controllers/' . $controllerName . '.php';
+$controllerPath = __DIR__ . '/app/controllers/' . $controllerName . '.php';
 if (!file_exists($controllerPath)) {
     http_response_code(404);
     die("Erreur 404 : Le contrôleur $controllerName est introuvable.");
