@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Security;
 use App\Core\Session;
+use App\Core\MailService;
 
 class AnnonceController extends Controller
 {
@@ -14,6 +15,7 @@ class AnnonceController extends Controller
     private $avisModel;
     private $favorisModel;
     private $candidatureModel;
+    private $etudiantModel;
 
     public function __construct()
     {
@@ -23,6 +25,7 @@ class AnnonceController extends Controller
         $this->avisModel = $this->model('AvisModel');
         $this->favorisModel = $this->model('FavorisModel');
         $this->candidatureModel = $this->model('CandidatureModel');
+        $this->etudiantModel = $this->model('EtudiantModel');
     }
 
     /**

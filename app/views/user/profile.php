@@ -77,6 +77,39 @@
                 </form>
             </div>
         </div>
+
+        <!-- Double Authentification (2FA) -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Sécurité - Double Authentification</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5>Statut : 
+                            <?php if ($user['est_2fa_active']): ?>
+                                <span class="badge bg-success">Activée</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Désactivée</span>
+                            <?php endif; ?>
+                        </h5>
+                        <p class="text-muted mb-0">La double authentification ajoute une couche de sécurité supplémentaire à votre compte.</p>
+                    </div>
+                    <div>
+                        <?php if ($user['est_2fa_active']): ?>
+                            <form action="<?php echo URLROOT; ?>/profil/disable2FA" method="POST" onsubmit="return confirm('Voulez-vous vraiment désactiver la double authentification ?');">
+                                <input type="hidden" name="csrf_token" value="<?php echo Security::csrfToken(); ?>">
+                                <button type="submit" class="btn btn-outline-danger">Désactiver</button>
+                            </form>
+                        <?php else: ?>
+                            <a href="<?php echo URLROOT; ?>/profil/setup2FA" class="btn btn-success">Activer le 2FA</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suppression du compte -->
     </div>
 </div>
 

@@ -9,9 +9,6 @@
         <a href="<?php echo URLROOT; ?>/favoris" class="list-group-item list-group-item-action">
             <i class="fas fa-heart me-2"></i> Mes Favoris
         </a>
-        <a href="<?php echo URLROOT; ?>/alerte" class="list-group-item list-group-item-action">
-            <i class="fas fa-bell me-2"></i> Mes Alertes
-        </a>
     <?php elseif ($_SESSION['user_role'] === 'bailleur'): ?>
         <a href="<?php echo URLROOT; ?>/annonce/mesAnnonces" class="list-group-item list-group-item-action">
             <i class="fas fa-building me-2"></i> Mes Annonces

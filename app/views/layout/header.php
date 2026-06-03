@@ -55,12 +55,6 @@
                                 <i class="fas fa-heart"></i> <span class="d-lg-none">Favoris</span>
                             </a>
                         </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo URLROOT; ?>/alerte">
-                                <i class="fas fa-bell"></i> <span class="d-lg-none">Alertes</span>
-                            </a>
-                        </li>
                     
                     <!-- Menu Bailleur -->
                     <?php elseif ($_SESSION['user_role'] === 'bailleur'): ?>
@@ -143,7 +137,7 @@
         <?php if (!empty($success_message)): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle"></i>
-                <strong>Succès !</strong> <?php echo Security::escape($success_message); ?>
+                <strong>Succès !</strong> <?php echo $success_message; ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
@@ -151,7 +145,18 @@
         <?php if (!empty($error_message)): ?>
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-circle"></i>
-                <strong>Erreur !</strong> <?php echo Security::escape($error_message); ?>
+                <strong>Erreur !</strong> <?php echo $error_message; ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <?php 
+            $info_message = Session::getFlash('info');
+            if ($info_message): 
+        ?>
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle"></i>
+                <strong>Info :</strong> <?php echo $info_message; ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>

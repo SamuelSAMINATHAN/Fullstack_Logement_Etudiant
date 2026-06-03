@@ -14,7 +14,7 @@ class ProfilController extends Controller
     private $annonceModel;
     private $favorisModel;
     private $messageModel;
-    private $alerteModel;
+    
 
     public function __construct()
     {
@@ -24,7 +24,6 @@ class ProfilController extends Controller
         $this->annonceModel = $this->model('AnnonceModel');
         $this->favorisModel = $this->model('FavorisModel');
         $this->messageModel = $this->model('MessageModel');
-        $this->alerteModel = $this->model('AlerteModel');
     }
 
     /**
@@ -73,8 +72,7 @@ class ProfilController extends Controller
         if ($user['role'] === 'etudiant') {
             $data['etudiant'] = $this->etudiantModel->getStudentById($_SESSION['user_id']);
             $data['stats'] = [
-                'favoris_count' => $this->favorisModel->countFavoritesByStudent($_SESSION['user_id']),
-                'alertes_count' => $this->alerteModel->countAlertsByStudent($_SESSION['user_id'])
+                'favoris_count' => $this->favorisModel->countFavoritesByStudent($_SESSION['user_id'])
             ];
         } else {
             $data['bailleur'] = $this->bailleurModel->getLandlordById($_SESSION['user_id']);
@@ -202,6 +200,119 @@ class ProfilController extends Controller
             $this->setFlash('error', 'Erreur lors du changement : ' . $e->getMessage());
             $this->redirect('/profil/changePassword');
         }
+    }
+
+ /**
+     * Affiche la page d'activation du 2FA
+     */
+    public function setup2FA()
+    {
+        $this->requireAuth();
+        
+        $libPath = dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/TwoFactorAuth.php';
+        if (!file_exists($libPath)) {
+            $this->setFlash('error', 'Bibliothèque 2FA introuvable.');
+            $this->redirect('/profil/profile');
+        }
+
+        // --- TOUS LES IMPORTS OBLIGATOIRES POUR EVITER LES ERREURS ---
+        require_once $libPath;
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/TwoFactorAuthException.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Algorithm.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/IQRCodeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/HandlesDataUri.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/BaseHTTPQRCodeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/QRServerProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Rng/IRNGProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Rng/CSRNGProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Time/ITimeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Time/LocalMachineTimeProvider.php';
+
+        $qrProvider = new \RobThree\Auth\Providers\Qr\QRServerProvider();
+        $tfa = new \RobThree\Auth\TwoFactorAuth($qrProvider, 'Dorocho');
+        
+        // On génère un secret temporaire en session
+        if (!isset($_SESSION['temp_2fa_secret'])) {
+            $_SESSION['temp_2fa_secret'] = $tfa->createSecret();
+        }
+
+        $qrCodeDataUri = $tfa->getQRCodeImageAsDataUri($_SESSION['user_email'], $_SESSION['temp_2fa_secret']);
+
+        $this->view('user/setup_2fa', [
+            'qrCode' => $qrCodeDataUri,
+            'secret' => $_SESSION['temp_2fa_secret'],
+            'csrf_token' => Security::csrfToken()
+        ]);
+    }
+
+    /**
+     * Valide et active le 2FA
+     */
+    public function verify2FASetup()
+    {
+        $this->requireAuth();
+
+        if (!$this->isPost()) {
+            $this->redirect('/profil/setup2FA');
+        }
+
+        $post = $this->sanitizePost();
+        if (!Security::verifyCsrf($post['csrf_token'] ?? '')) {
+            $this->setFlash('error', 'Token CSRF invalide.');
+            $this->redirect('/profil/setup2FA');
+        }
+
+        $code = $post['code'] ?? '';
+        $secret = $_SESSION['temp_2fa_secret'] ?? '';
+
+        if (empty($code) || empty($secret)) {
+            $this->setFlash('error', 'Données manquantes.');
+            $this->redirect('/profil/setup2FA');
+        }
+
+        // --- CORRECTION : ON RE-IMPORTE EXACTEMENT LES MEMES FICHIERS ICI ---
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/TwoFactorAuth.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/TwoFactorAuthException.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Algorithm.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/IQRCodeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/HandlesDataUri.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/BaseHTTPQRCodeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/QRServerProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Rng/IRNGProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Rng/CSRNGProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Time/ITimeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Time/LocalMachineTimeProvider.php';
+        
+        $qrProvider = new \RobThree\Auth\Providers\Qr\QRServerProvider();
+        $tfa = new \RobThree\Auth\TwoFactorAuth($qrProvider, 'Dorocho');
+
+        if ($tfa->verifyCode($secret, $code)) {
+            $this->utilisateurModel->enableTwoFactor($_SESSION['user_id'], $secret);
+            unset($_SESSION['temp_2fa_secret']);
+            $this->setFlash('success', 'Double authentification activée avec succès !');
+            $this->redirect('/profil/profile');
+        } else {
+            $this->setFlash('error', 'Code invalide. Veuillez réessayer.');
+            $this->redirect('/profil/setup2FA');
+        }
+    }
+
+
+    /**
+     * Désactive le 2FA
+     */
+    public function disable2FA()
+    {
+        $this->requireAuth();
+        
+        if ($this->isPost()) {
+            $post = $this->sanitizePost();
+            if (Security::verifyCsrf($post['csrf_token'] ?? '')) {
+                $this->utilisateurModel->disableTwoFactor($_SESSION['user_id']);
+                $this->setFlash('success', 'Double authentification désactivée.');
+            }
+        }
+        $this->redirect('/profil/profile');
     }
 
     /**

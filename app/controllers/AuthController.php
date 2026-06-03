@@ -64,9 +64,7 @@ class AuthController extends Controller
 
         // Récupérer l'utilisateur par email
         $user = $this->utilisateurModel->getUserByEmail($email);
-        if (is_array($user) && isset($user[0])) {
-        $user = $user[0];
-}
+
         if (!$user || !Security::verifyPassword($password, $user['mdp'])) {
             $this->setFlash('error', 'Email ou mot de passe incorrect.');
             $this->redirect('/auth/login');
@@ -81,7 +79,91 @@ class AuthController extends Controller
         // Mettre à jour la dernière connexion
         $this->utilisateurModel->updateLastLogin($user['id'] ?? $user['idUtilisateur']);
 
-        // Créer la session
+        // --- GESTION DU 2FA ---
+        if ($user['est_2fa_active'] && !empty($user['deux_facteurs_secret'])) {
+            // On stocke l'ID utilisateur temporairement en session
+            Session::set('temp_2fa_user_id', $user['id'] ?? $user['idUtilisateur']);
+            $this->redirect('/auth/verify2FA');
+        }
+
+        // Créer la session définitive si pas de 2FA
+        $this->createFinalSession($user);
+    }
+
+    /**
+     * Affiche la page de vérification 2FA
+     */
+    public function verify2FA()
+    {
+        if (!Session::get('temp_2fa_user_id')) {
+            $this->redirect('/auth/login');
+        }
+
+        $data = [
+            'csrf_token' => Security::csrfToken()
+        ];
+
+        $this->view('auth/verify_2fa', $data);
+    }
+
+    /**
+     * Traite la vérification du code 2FA lors du login
+     */
+    public function verify2FAHandler()
+    {
+        $tempId = Session::get('temp_2fa_user_id');
+        if (!$tempId) {
+            $this->redirect('/auth/login');
+        }
+
+        if (!$this->isPost()) {
+            $this->redirect('/auth/verify2FA');
+        }
+
+        $post = $this->sanitizePost();
+        if (!Security::verifyCsrf($post['csrf_token'] ?? '')) {
+            $this->setFlash('error', 'Token CSRF invalide.');
+            $this->redirect('/auth/verify2FA');
+        }
+
+        $code = $post['code'] ?? '';
+        $user = $this->utilisateurModel->getUserById($tempId);
+
+        if (!$user) {
+            Session::remove('temp_2fa_user_id');
+            $this->redirect('/auth/login');
+        }
+
+        // --- CORRECTION : AJOUT DES IMPORTS COMPLETS POUR LA VALDIATION ---
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/TwoFactorAuth.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/TwoFactorAuthException.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Algorithm.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/IQRCodeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/HandlesDataUri.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/BaseHTTPQRCodeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Qr/QRServerProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Rng/IRNGProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Rng/CSRNGProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Time/ITimeProvider.php';
+        require_once dirname(APPROOT) . '/lib/TwoFactorAuth-master/lib/Providers/Time/LocalMachineTimeProvider.php';
+
+        $qrProvider = new \RobThree\Auth\Providers\Qr\QRServerProvider();
+        $tfa = new \RobThree\Auth\TwoFactorAuth($qrProvider, 'Dorocho');
+
+        if ($tfa->verifyCode($user['deux_facteurs_secret'], $code)) {
+            Session::remove('temp_2fa_user_id');
+            $this->createFinalSession($user);
+        } else {
+            $this->setFlash('error', 'Code 2FA invalide.');
+            $this->redirect('/auth/verify2FA');
+        }
+    }
+
+    /**
+     * Crée la session utilisateur finale
+     */
+    private function createFinalSession($user)
+    {
         Session::regenerate();
         Session::set('user_id', $user['id'] ?? $user['idUtilisateur']);
         Session::set('user_email', $user['email']);
@@ -98,16 +180,13 @@ class AuthController extends Controller
      */
     public function register($type = null)
     {
-        // 1. Si aucun type n'est choisi, on affiche la page de choix
         if ($type === null) {
             $this->view('auth/select_type');
             return;
         }
 
-        // 2. On prépare les données communes (CSRF)
         $data = ['csrf_token' => Security::csrfToken()];
 
-        // 3. On affiche le formulaire spécifique
         if ($type === 'etudiant') {
             $this->view('auth/register_etudiant', $data);
         } elseif ($type === 'bailleur') {
@@ -128,13 +207,11 @@ class AuthController extends Controller
 
         $post = $this->sanitizePost();
 
-        // Vérifier le token CSRF
         if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
             $this->setFlash('error', 'Token CSRF invalide.');
             $this->redirect('/auth/register');
         }
 
-        // Récupérer les données
         $nom = trim($post['nom'] ?? '');
         $prenom = trim($post['prenom'] ?? '');
         $email = trim($post['email'] ?? '');
@@ -144,40 +221,33 @@ class AuthController extends Controller
         $dateNaissance = $post['dateNaissance'] ?? null;
         $localisation = trim($post['localisation'] ?? '');
 
-        // Valider le rôle
         if (!in_array($role, ['etudiant', 'bailleur'])) {
             $this->setFlash('error', 'Rôle invalide.');
             $this->redirect('/auth/register');
         }
 
-        // Déterminer l'URL de redirection en cas d'erreur
         $redirectUrl = '/auth/register/' . $role;
 
-        // Valider les données obligatoires
         if (empty($nom) || empty($prenom) || empty($email) || empty($password)) {
             $this->setFlash('error', 'Tous les champs obligatoires doivent être remplis.');
             $this->redirect($redirectUrl);
         }
 
-        // Valider l'email
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->setFlash('error', 'Email invalide.');
             $this->redirect($redirectUrl);
         }
 
-        // Vérifier la correspondance des mots de passe
         if ($password !== $password_confirm) {
             $this->setFlash('error', 'Les mots de passe ne correspondent pas.');
             $this->redirect($redirectUrl);
         }
 
-        // Vérifier la longueur du mot de passe
         if (strlen($password) < 8) {
             $this->setFlash('error', 'Le mot de passe doit contenir au moins 8 caractères.');
             $this->redirect($redirectUrl);
         }
 
-        // Valider les champs spécifiques aux étudiants
         if ($role === 'etudiant') {
             if (empty($dateNaissance)) {
                 $this->setFlash('error', 'La date de naissance est obligatoire.');
@@ -189,13 +259,11 @@ class AuthController extends Controller
             }
         }
 
-        // Vérifier l'unicité de l'email
         if (!$this->utilisateurModel->isEmailUnique($email)) {
             $this->setFlash('error', 'Cet email est déjà utilisé.');
             $this->redirect($redirectUrl);
         }
 
-        // Préparer les données utilisateur avec les bons noms de colonnes
         $userData = [
             'nom' => $nom,
             'prenom' => $prenom,
@@ -205,10 +273,8 @@ class AuthController extends Controller
             'date_acceptation_cgu' => date('Y-m-d H:i:s')
         ];
 
-        // Enregistrer selon le rôle avec gestion d'exception robuste
         try {
             if ($role === 'etudiant') {
-                // Valider le format de la date
                 $dateObj = \DateTime::createFromFormat('Y-m-d', $dateNaissance);
                 if (!$dateObj || $dateObj->format('Y-m-d') !== $dateNaissance) {
                     $this->setFlash('error', 'Format de date de naissance invalide.');
@@ -232,7 +298,6 @@ class AuthController extends Controller
             $this->setFlash('success', 'Inscription réussie ! Veuillez vous connecter.');
             $this->redirect('/auth/login');
         } catch (\PDOException $e) {
-            // Gérer les erreurs SQL spécifiques
             if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
                 $this->setFlash('error', 'Cet email est déjà utilisé.');
             } elseif (strpos($e->getMessage(), 'NOT NULL') !== false) {

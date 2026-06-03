@@ -54,7 +54,8 @@ class UtilisateurModel extends Model
      */
     public function getUserByEmail($email)
     {
-        return $this->findWhere('utilisateur', 'email', $email);
+        $sql = "SELECT * FROM utilisateur WHERE email = ?";
+        return $this->selectOne($sql, [$email]);
     }
 
     /**

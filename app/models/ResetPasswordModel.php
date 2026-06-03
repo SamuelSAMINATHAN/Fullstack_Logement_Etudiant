@@ -32,7 +32,8 @@ class ResetPasswordModel extends Model
      */
     public function getTokenByValue($token)
     {
-        return $this->findWhere('reset_password', 'token', $token);
+        $sql = "SELECT * FROM reset_password WHERE token = ?";
+        return $this->selectOne($sql, [$token]);
     }
 
     /**

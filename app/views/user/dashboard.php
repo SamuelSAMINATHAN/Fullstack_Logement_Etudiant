@@ -14,9 +14,6 @@
                 <a href="<?php echo URLROOT; ?>/favoris" class="list-group-item list-group-item-action">
                     <i class="fas fa-heart me-2"></i> Mes Favoris
                 </a>
-                <a href="<?php echo URLROOT; ?>/alerte" class="list-group-item list-group-item-action">
-                    <i class="fas fa-bell me-2"></i> Mes Alertes
-                </a>
             <?php elseif ($_SESSION['user_role'] === 'bailleur'): ?>
                 <a href="<?php echo URLROOT; ?>/annonce/mes-annonces" class="list-group-item list-group-item-action">
                     <i class="fas fa-building me-2"></i> Mes Annonces
@@ -34,7 +31,7 @@
         
         <div class="row mb-4">
             <?php if ($_SESSION['user_role'] === 'etudiant'): ?>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <div class="card text-white bg-primary h-100 shadow-sm">
                         <div class="card-body text-center d-flex flex-column justify-content-center">
                             <h5 class="card-title">Favoris</h5>
@@ -42,19 +39,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <div class="card text-white bg-success h-100 shadow-sm">
                         <div class="card-body text-center d-flex flex-column justify-content-center">
                             <h5 class="card-title">Candidatures</h5>
                             <h2 class="display-4 mb-0"><?php echo isset($stats['candidatures_count']) ? $stats['candidatures_count'] : 0; ?></h2>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card text-white bg-info h-100 shadow-sm">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Alertes actives</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['alertes_count']) ? $stats['alertes_count'] : 0; ?></h2>
                         </div>
                     </div>
                 </div>
