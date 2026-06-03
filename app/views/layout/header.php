@@ -94,9 +94,6 @@
                             <li><a class="dropdown-item" href="<?php echo URLROOT; ?>/profil/profile">
                                 <i class="fas fa-user"></i> Mon Profil
                             </a></li>
-                            <li><a class="dropdown-item" href="<?php echo URLROOT; ?>/profil/changePassword">
-                                <i class="fas fa-lock"></i> Changer le mot de passe
-                            </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="<?php echo URLROOT; ?>/auth/logout">
                                 <i class="fas fa-sign-out-alt"></i> Déconnexion

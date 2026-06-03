@@ -14,9 +14,9 @@
             <div class="col-md-6 mb-3">
                 <div class="card text-white bg-primary h-100 shadow-sm">
                     <div class="card-body text-center d-flex flex-column justify-content-center">
-                        <h5 class="card-title">Mes Favoris</h5>
-                        <h2 class="display-4 mb-0"><?php echo isset($stats['favoris_count']) ? $stats['favoris_count'] : 0; ?></h2>
-                        <a href="<?= URLROOT ?>/favoris" class="text-white mt-2 small text-decoration-none">Voir mes favoris <i class="fas fa-arrow-right"></i></a>
+                        <h5 class="card-title"><?php echo $stats['main_label']; ?></h5>
+                        <h2 class="display-4 mb-0"><?php echo isset($stats['main_count']) ? $stats['main_count'] : 0; ?></h2>
+                        <a href="<?= URLROOT ?><?php echo $stats['main_link']; ?>" class="text-white mt-2 small text-decoration-none">Voir <?php echo strtolower($stats['main_label']); ?> <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>

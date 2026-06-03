@@ -1,30 +1,33 @@
-<footer class="footer">
-    <div class="footer-content">
-        <div class="footer-section">
-            <h4><i class="fas fa-home"></i> Dorocho</h4>
-            <p>Trouvez votre logement idéal en toute simplicité.</p>
-        </div>
-        <div class="footer-section">
-            <h4>Liens utiles</h4>
-            <a href="<?php echo URLROOT; ?>/page/about">À propos</a>
-            <a href="<?php echo URLROOT; ?>/page/contact">Contact</a>
-            <a href="<?php echo URLROOT; ?>/page/faq">FAQ</a>
-            <a href="<?php echo URLROOT; ?>/page/cgu">CGU</a>
-        </div>
-        <div class="footer-section">
-            <h4>Suivez-nous</h4>
-            <a href="#"><i class="fab fa-facebook"></i> Facebook</a>
-            <a href="#"><i class="fab fa-instagram"></i> Instagram</a>
-            <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>&copy; 2026 Dorocho - Tous droits réservés</p>
-    </div>
-</footer>
-    </main>
+</main>
 
-    <!-- Bootstrap 5 JS Bundle (inclut Popper.js nécessaire pour les dropdowns) -->
+    <footer class="footer">
+        <div class="container"> 
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-home"></i> Dorocho</h4>
+                    <p>Trouvez votre logement idéal en toute simplicité.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Liens utiles</h4>
+                    <a href="<?php echo URLROOT; ?>/page/about">À propos</a>
+                    <a href="<?php echo URLROOT; ?>/page/contact">Contact</a>
+                    <a href="<?php echo URLROOT; ?>/page/faq">FAQ</a>
+                    <a href="<?php echo URLROOT; ?>/page/cgu">CGU</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Suivez-nous</h4>
+                    <a href="#"><i class="fab fa-facebook"></i> Facebook</a>
+                    <a href="#"><i class="fab fa-instagram"></i> Instagram</a>
+                    <a href="#"><i class="fab fa-twitter"></i> Twitter</a>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2026 Dorocho - Tous droits réservés</p>
+            </div>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
