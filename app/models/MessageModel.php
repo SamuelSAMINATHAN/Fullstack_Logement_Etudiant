@@ -57,10 +57,15 @@ class MessageModel extends Model
         $query = "
             SELECT * FROM message
             WHERE (idExpediteur = :id1 AND idDestinataire = :id2)
-               OR (idExpediteur = :id2 AND idDestinataire = :id1)
+               OR (idExpediteur = :id2_alt AND idDestinataire = :id1_alt)
             ORDER BY dateEnvoi ASC
         ";
-        $params = ['id1' => $idUtilisateur1, 'id2' => $idUtilisateur2];
+        $params = [
+            'id1' => $idUtilisateur1, 
+            'id2' => $idUtilisateur2,
+            'id1_alt' => $idUtilisateur1,
+            'id2_alt' => $idUtilisateur2
+        ];
         $stmt = $db->query($query, $params);
         return $stmt ?? [];
     }
@@ -73,16 +78,36 @@ class MessageModel extends Model
     public function getConversations($idUtilisateur)
     {
         $db = $this;
+        // Cette requête récupère le dernier message de chaque conversation
+        // Utilisation de paramètres nommés uniques pour compatibilité avec ATTR_EMULATE_PREPARES => false
         $query = "
-            SELECT m.*, u1.nom as nom_expediteur, u1.prenom as prenom_expediteur,
-                   u2.nom as nom_destinataire, u2.prenom as prenom_destinataire
-            FROM message m
-            JOIN utilisateur u1 ON m.idExpediteur = u1.idUtilisateur
-            JOIN utilisateur u2 ON m.idDestinataire = u2.idUtilisateur
-            WHERE m.idExpediteur = :idUtilisateur OR m.idDestinataire = :idUtilisateur
-            ORDER BY m.dateEnvoi DESC
+            SELECT m1.*, 
+                   u_exp.nom as nom_expediteur, u_exp.prenom as prenom_expediteur,
+                   u_dest.nom as nom_destinataire, u_dest.prenom as prenom_destinataire
+            FROM message m1
+            JOIN (
+                SELECT 
+                    CASE WHEN idExpediteur = :id1 THEN idDestinataire ELSE idExpediteur END AS other_id,
+                    MAX(dateEnvoi) as max_date
+                FROM message
+                WHERE idExpediteur = :id2 OR idDestinataire = :id3
+                GROUP BY other_id
+            ) m2 ON (CASE WHEN m1.idExpediteur = :id4 THEN m1.idDestinataire ELSE m1.idExpediteur END = m2.other_id 
+                    AND m1.dateEnvoi = m2.max_date)
+            JOIN utilisateur u_exp ON m1.idExpediteur = u_exp.idUtilisateur
+            JOIN utilisateur u_dest ON m1.idDestinataire = u_dest.idUtilisateur
+            WHERE m1.idExpediteur = :id5 OR m1.idDestinataire = :id6
+            ORDER BY m1.dateEnvoi DESC
         ";
-        $stmt = $db->query($query, ['idUtilisateur' => $idUtilisateur]);
+        $params = [
+            'id1' => $idUtilisateur,
+            'id2' => $idUtilisateur,
+            'id3' => $idUtilisateur,
+            'id4' => $idUtilisateur,
+            'id5' => $idUtilisateur,
+            'id6' => $idUtilisateur
+        ];
+        $stmt = $db->query($query, $params);
         return $stmt ?? [];
     }
 
@@ -106,7 +131,7 @@ class MessageModel extends Model
     /**
      * Crée un nouveau message
      * @param array $data
-     * @return int ID du nouveau message
+     * @return int|bool
      */
     public function createMessage($data)
     {
@@ -142,14 +167,14 @@ class MessageModel extends Model
      */
     public function markConversationAsRead($idUtilisateur1, $idUtilisateur2)
     {
-        $db = $this;
-        $query = "
+        $sql = "
             UPDATE message SET estLu = 1
             WHERE idDestinataire = :idUtilisateur1 
               AND idExpediteur = :idUtilisateur2
               AND estLu = 0
         ";
-        return $db->execute($query, ['idUtilisateur1' => $idUtilisateur1, 'idUtilisateur2' => $idUtilisateur2]);
+        $this->query($sql, ['idUtilisateur1' => $idUtilisateur1, 'idUtilisateur2' => $idUtilisateur2]);
+        return true;
     }
 
     /**
@@ -170,13 +195,18 @@ class MessageModel extends Model
      */
     public function deleteConversation($idUtilisateur1, $idUtilisateur2)
     {
-        $db = $this;
-        $query = "
+        $sql = "
             DELETE FROM message
             WHERE (idExpediteur = :id1 AND idDestinataire = :id2)
-               OR (idExpediteur = :id2 AND idDestinataire = :id1)
+               OR (idExpediteur = :id2_alt AND idDestinataire = :id1_alt)
         ";
-        return $db->execute($query, ['id1' => $idUtilisateur1, 'id2' => $idUtilisateur2]);
+        $this->query($sql, [
+            'id1' => $idUtilisateur1, 
+            'id2' => $idUtilisateur2,
+            'id1_alt' => $idUtilisateur1,
+            'id2_alt' => $idUtilisateur2
+        ]);
+        return true;
     }
 
     /**
@@ -207,9 +237,14 @@ class MessageModel extends Model
         $query = "
             SELECT COUNT(*) as count FROM message
             WHERE (idExpediteur = :id1 AND idDestinataire = :id2)
-               OR (idExpediteur = :id2 AND idDestinataire = :id1)
+               OR (idExpediteur = :id2_alt AND idDestinataire = :id1_alt)
         ";
-        $stmt = $db->query($query, ['id1' => $idUtilisateur1, 'id2' => $idUtilisateur2]);
+        $stmt = $db->query($query, [
+            'id1' => $idUtilisateur1, 
+            'id2' => $idUtilisateur2,
+            'id1_alt' => $idUtilisateur1,
+            'id2_alt' => $idUtilisateur2
+        ]);
         return $stmt ? ($stmt[0]['count'] ?? 0) : 0;
     }
 
@@ -225,11 +260,16 @@ class MessageModel extends Model
         $query = "
             SELECT * FROM message
             WHERE (idExpediteur = :id1 AND idDestinataire = :id2)
-               OR (idExpediteur = :id2 AND idDestinataire = :id1)
+               OR (idExpediteur = :id2_alt AND idDestinataire = :id1_alt)
             ORDER BY dateEnvoi DESC
             LIMIT 1
         ";
-        $stmt = $db->query($query, ['id1' => $idUtilisateur1, 'id2' => $idUtilisateur2]);
+        $stmt = $db->query($query, [
+            'id1' => $idUtilisateur1, 
+            'id2' => $idUtilisateur2,
+            'id1_alt' => $idUtilisateur1,
+            'id2_alt' => $idUtilisateur2
+        ]);
         return $stmt ? ($stmt[0] ?? null) : null;
     }
 }

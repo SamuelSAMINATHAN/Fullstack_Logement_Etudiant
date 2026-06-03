@@ -12,7 +12,11 @@ class AnnonceModel extends Model
      */
     public function getAllAnnouncements()
     {
-        return $this->findAll('annonce');
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE b.estShadowban = 0";
+        return $this->select($sql);
     }
 
     /**
@@ -22,7 +26,12 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementById($idAnnonce)
     {
-        return $this->findById('annonce', 'idAnnonce', $idAnnonce);
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE a.idAnnonce = ?";
+        $result = $this->select($sql, [$idAnnonce]);
+        return $result ? $result[0] : null;
     }
 
     /**
@@ -32,7 +41,11 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementsByLandlord($idBailleur)
     {
-        return $this->findWhere('annonce', 'idBailleur', $idBailleur);
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE a.idBailleur = ?";
+        return $this->select($sql, [$idBailleur]);
     }
 
     /**
@@ -42,7 +55,11 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementsByLocation($localisation)
     {
-        return $this->findWhere('annonce', 'localisation', $localisation);
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE a.localisation LIKE ? AND b.estShadowban = 0";
+        return $this->select($sql, ['%' . $localisation . '%']);
     }
 
     /**
@@ -52,7 +69,11 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementsByType($type_logement)
     {
-        return $this->findWhere('annonce', 'type_logement', $type_logement);
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE a.type_logement = ? AND b.estShadowban = 0";
+        return $this->select($sql, [$type_logement]);
     }
 
     /**
@@ -62,7 +83,11 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementsByFurnished($meuble)
     {
-        return $this->findWhere('annonce', 'meuble', $meuble);
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE a.meuble = ? AND b.estShadowban = 0";
+        return $this->select($sql, [$meuble]);
     }
 
     /**
@@ -72,7 +97,11 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementsByColocation($estColocation)
     {
-        return $this->findWhere('annonce', 'estColocation', $estColocation);
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE a.estColocation = ? AND b.estShadowban = 0";
+        return $this->select($sql, [$estColocation]);
     }
 
     /**
@@ -82,14 +111,14 @@ class AnnonceModel extends Model
      */
     public function searchAnnouncements($filters = [])
     {
-        $sql = "SELECT a.*, u.nom, u.prenom, u.email, b.estVerifie
-                FROM annonce a 
+        $sql = "SELECT a.*, u.nom, u.prenom, u.email, b.estVerifie, b.estShadowban
+                FROM annonce a
                 JOIN bailleur b ON a.idBailleur = b.idUtilisateur
-                JOIN utilisateur u ON b.idUtilisateur = u.idUtilisateur 
+                JOIN utilisateur u ON b.idUtilisateur = u.idUtilisateur
                 WHERE b.estShadowban = 0";
-        
+
         $params = [];
-        
+
         // Filtre par recherche (titre, description, localisation)
         if (!empty($filters['search'])) {
             $sql .= " AND (a.titre LIKE ? OR a.description LIKE ? OR a.localisation LIKE ?)";
@@ -98,38 +127,38 @@ class AnnonceModel extends Model
             $params[] = $searchTerm;
             $params[] = $searchTerm;
         }
-        
+
         // Filtre par localisation (compatibilité ancienne version)
         if (!empty($filters['localisation'])) {
             $sql .= " AND a.localisation LIKE ?";
             $params[] = '%' . $filters['localisation'] . '%';
         }
-        
+
         // Filtre par prix maximum
         if (isset($filters['prix_max']) || !empty($filters['price_max'])) {
             $priceMax = $filters['price_max'] ?? $filters['prix_max'];
             $sql .= " AND a.prix <= ?";
             $params[] = $priceMax;
         }
-        
+
         // Filtre par prix minimum
         if (isset($filters['prix_min'])) {
             $sql .= " AND a.prix >= ?";
             $params[] = $filters['prix_min'];
         }
-        
+
         // Filtre par surface minimum
         if (!empty($filters['surface_min'])) {
             $sql .= " AND a.surface >= ?";
             $params[] = $filters['surface_min'];
         }
-        
+
         // Filtre par nombre de pièces
         if (!empty($filters['rooms']) && $filters['rooms'] !== '0') {
             $sql .= " AND a.nbPieces = ?";
             $params[] = $filters['rooms'];
         }
-        
+
         // Filtres par type (individuel, couple, colocation)
         if (!empty($filters['types'])) {
             $types = explode(',', $filters['types']);
@@ -151,29 +180,26 @@ class AnnonceModel extends Model
                 $sql .= " AND (" . implode(' OR ', $typeConditions) . ")";
             }
         }
-        
+
         // Filtre par type de logement (compatibilité ancienne version)
         if (!empty($filters['type_logement'])) {
             $sql .= " AND a.type_logement = ?";
             $params[] = $filters['type_logement'];
         }
-        
+
         // Filtres par équipements (Uniquement ceux présents dans la table annonce)
         if (isset($filters['meuble']) || !empty($filters['meuble'])) {
             $sql .= " AND a.meuble = 1";
         }
-        
-        // Note: ascenseur, parking, balcon, animaux, pmr ne sont pas dans la table annonce
-        // On les ignore pour éviter les erreurs SQL
-        
+
         // Filtre par colocation (compatibilité ancienne version)
         if (isset($filters['estColocation'])) {
             $sql .= " AND a.estColocation = ?";
             $params[] = $filters['estColocation'];
         }
-        
+
         $sql .= " ORDER BY a.datePublication DESC";
-        
+
         return $this->select($sql, $params);
     }
 
@@ -199,6 +225,41 @@ class AnnonceModel extends Model
     }
 
     /**
+     * Incrémente le compteur de vues d'une annonce
+     * @param int $idAnnonce
+     * @return bool
+     */
+    public function incrementViews($idAnnonce)
+    {
+        $sql = "UPDATE annonce SET vues = vues + 1 WHERE idAnnonce = ?";
+        return $this->update($sql, [$idAnnonce]) > 0;
+    }
+
+    /**
+     * Récupère le nombre total de vues pour toutes les annonces d'un bailleur
+     * @param int $idBailleur
+     * @return int
+     */
+    public function getTotalViewsByLandlord($idBailleur)
+    {
+        $sql = "SELECT SUM(vues) as total FROM annonce WHERE idBailleur = ?";
+        $result = $this->selectOne($sql, [$idBailleur]);
+        return $result ? (int)($result['total'] ?? 0) : 0;
+    }
+
+    /**
+     * Compte le nombre d'annonces d'un bailleur
+     * @param int $idBailleur
+     * @return int
+     */
+    public function countAnnouncementsByLandlord($idBailleur)
+    {
+        $sql = "SELECT COUNT(*) as total FROM annonce WHERE idBailleur = ?";
+        $result = $this->selectOne($sql, [$idBailleur]);
+        return $result ? (int)($result['total'] ?? 0) : 0;
+    }
+
+    /**
      * Supprime une annonce
      * @param int $idAnnonce
      * @return bool
@@ -215,27 +276,13 @@ class AnnonceModel extends Model
      */
     public function getRecentAnnouncements($limit = 10)
     {
-        $db = $this;
-        $query = "
-            SELECT * FROM annonce
-            ORDER BY datePublication DESC
-            LIMIT :limit
-        ";
-        $stmt = $db->query($query, ['limit' => $limit]);
-        return $stmt ?? [];
-    }
-
-    /**
-     * Compte le nombre d'annonces d'un bailleur
-     * @param int $idBailleur
-     * @return int
-     */
-    public function countAnnouncementsByLandlord($idBailleur)
-    {
-        $db = $this;
-        $query = "SELECT COUNT(*) as count FROM annonce WHERE idBailleur = :idBailleur";
-        $stmt = $db->query($query, ['idBailleur' => $idBailleur]);
-        return $stmt ? ($stmt[0]['count'] ?? 0) : 0;
+        $sql = "SELECT a.*, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                WHERE b.estShadowban = 0
+                ORDER BY a.datePublication DESC
+                LIMIT ?";
+        return $this->select($sql, [$limit]);
     }
 
     /**
@@ -245,15 +292,12 @@ class AnnonceModel extends Model
      */
     public function getAnnouncementWithLandlord($idAnnonce)
     {
-        $db = $this;
-        $query = "
-            SELECT a.*, u.nom, u.prenom, u.email, b.estVerifie, b.estShadowban
-            FROM annonce a
-            JOIN bailleur b ON a.idBailleur = b.idUtilisateur
-            JOIN utilisateur u ON b.idUtilisateur = u.idUtilisateur
-            WHERE a.idAnnonce = :idAnnonce
-        ";
-        $stmt = $db->query($query, ['idAnnonce' => $idAnnonce]);
-        return $stmt ? ($stmt[0] ?? null) : null;
+        $sql = "SELECT a.*, u.nom, u.prenom, u.email, b.estVerifie, b.estShadowban
+                FROM annonce a
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                JOIN utilisateur u ON b.idUtilisateur = u.idUtilisateur
+                WHERE a.idAnnonce = ?";
+        $result = $this->select($sql, [$idAnnonce]);
+        return $result ? $result[0] : null;
     }
 }

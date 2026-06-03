@@ -12,7 +12,10 @@ class EtudiantModel extends Model
      */
     public function getAllStudents()
     {
-        return $this->findAll('etudiant');
+        $sql = "SELECT u.*, e.*
+                FROM utilisateur u
+                JOIN etudiant e ON u.idUtilisateur = e.idUtilisateur";
+        return $this->select($sql);
     }
 
     /**
@@ -22,7 +25,12 @@ class EtudiantModel extends Model
      */
     public function getStudentById($idUtilisateur)
     {
-        return $this->findById('etudiant', 'idUtilisateur', $idUtilisateur);
+        $sql = "SELECT u.*, e.*
+                FROM utilisateur u
+                JOIN etudiant e ON u.idUtilisateur = e.idUtilisateur
+                WHERE u.idUtilisateur = ?";
+        $result = $this->select($sql, [$idUtilisateur]);
+        return $result ? $result[0] : null;
     }
 
     /**
@@ -32,15 +40,12 @@ class EtudiantModel extends Model
      */
     public function getStudentWithUser($idUtilisateur)
     {
-        $db = $this;
-        $query = "
-            SELECT u.*, e.*
-            FROM utilisateur u
-            JOIN etudiant e ON u.idUtilisateur = e.idUtilisateur
-            WHERE u.idUtilisateur = :idUtilisateur
-        ";
-        $stmt = $db->query($query, ['idUtilisateur' => $idUtilisateur]);
-        return $stmt ? $stmt[0] ?? null : null;
+        $sql = "SELECT u.*, e.*
+                FROM utilisateur u
+                JOIN etudiant e ON u.idUtilisateur = e.idUtilisateur
+                WHERE u.idUtilisateur = ?";
+        $result = $this->select($sql, [$idUtilisateur]);
+        return $result ? $result[0] : null;
     }
 
     /**
@@ -50,19 +55,27 @@ class EtudiantModel extends Model
      */
     public function getStudentsByLocation($localisation)
     {
-        return $this->findWhere('etudiant', 'localisation', $localisation);
+        $sql = "SELECT u.*, e.*
+                FROM utilisateur u
+                JOIN etudiant e ON u.idUtilisateur = e.idUtilisateur
+                WHERE e.localisation LIKE ?";
+        return $this->select($sql, ['%' . $localisation . '%']);
     }
 
     /**
-     * Crée un nouveau profil étudiant
+     * Crée un nouveau profil étudiant (si l'utilisateur existe déjà)
      * @param int $idUtilisateur
      * @param array $data Données spécifiques à l'étudiant
      * @return bool
      */
     public function createStudent($idUtilisateur, $data)
     {
-        $data['idUtilisateur'] = $idUtilisateur;
-        return $this->create('etudiant', $data);
+        $studentData = [
+            'idUtilisateur' => $idUtilisateur,
+            'dateNaissance' => $data['dateNaissance'] ?? null,
+            'localisation' => $data['localisation'] ?? null
+        ];
+        return $this->create('etudiant', $studentData);
     }
 
     /**
@@ -88,38 +101,45 @@ class EtudiantModel extends Model
 
     /**
      * Enregistre un étudiant complet (utilisateur + étudiant)
-     * @param array $userData Données utilisateur
-     * @param array $studentData Données étudiantes
+     * @param array $userData Données de l'utilisateur (nom, prenom, email, mdp, role, date_acceptation_cgu)
+     * @param array $studentData Données spécifiques à l'étudiant (dateNaissance, localisation)
      * @return int|false ID de l'utilisateur en cas de succès, false sinon
      */
     public function registerStudent($userData, $studentData)
     {
-        // 1. Insérer dans la table 'utilisateur'
-        $sqlUser = "INSERT INTO utilisateur (nom, prenom, email, mdp, role, date_acceptation_cgu)
-                    VALUES (?, ?, ?, ?, ?, ?)";
-
-        $passwordHash = password_hash($userData['mdp'], PASSWORD_BCRYPT);
-
-        $this->insert($sqlUser, [
-            $userData['nom'],
-            $userData['prenom'],
-            $userData['email'],
-            $passwordHash,
-            $userData['role'],
-            $userData['date_acceptation_cgu']
+        // 1. Créer l'utilisateur dans la table `utilisateur`
+        $userId = $this->create('utilisateur', [
+            'nom' => $userData['nom'],
+            'prenom' => $userData['prenom'],
+            'email' => $userData['email'],
+            'mdp' => password_hash($userData['mdp'], PASSWORD_BCRYPT),
+            'role' => $userData['role'],
+            'date_acceptation_cgu' => $userData['date_acceptation_cgu'] ?? date('Y-m-d H:i:s')
         ]);
 
-        // 2. Récupérer l'ID généré
-        $userId = $this->lastInsertId();
+        if (!$userId) {
+            return false;
+        }
 
-        // 3. Insérer dans la table 'etudiant' avec cet ID
-        $sqlEtudiant = "INSERT INTO etudiant (idUtilisateur, dateNaissance, localisation) VALUES (?, ?, ?)";
-        $this->insert($sqlEtudiant, [
-            $userId,
-            $studentData['dateNaissance'],
-            $studentData['localisation']
+        // 2. Créer le profil étudiant dans la table `etudiant`
+        $this->create('etudiant', [
+            'idUtilisateur' => $userId,
+            'dateNaissance' => $studentData['dateNaissance'],
+            'localisation' => $studentData['localisation']
         ]);
 
         return $userId;
+    }
+
+    /**
+     * Vérifie si un utilisateur est un étudiant
+     * @param int $idUtilisateur
+     * @return bool
+     */
+    public function isStudent($idUtilisateur)
+    {
+        $sql = "SELECT COUNT(*) as count FROM etudiant WHERE idUtilisateur = ?";
+        $result = $this->selectOne($sql, [$idUtilisateur]);
+        return $result && $result['count'] > 0;
     }
 }

@@ -65,14 +65,14 @@
                     <!-- Menu Bailleur -->
                     <?php elseif ($_SESSION['user_role'] === 'bailleur'): ?>
                         <li class="nav-item">
-                            <a class="btn btn-auth btn-sm" href="<?php echo URLROOT; ?>/annonce/create">
-                                <i class="fas fa-plus"></i> Déposer une annonce
+                            <a class="nav-link" href="<?php echo URLROOT; ?>/annonce/mesAnnonces">
+                                <i class="fas fa-building"></i> <span class="d-lg-none">Mes Annonces</span>
                             </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo URLROOT; ?>/candidature/received">
-                                <i class="fas fa-inbox"></i> Candidatures
+                            <a class="btn btn-auth btn-sm" href="<?php echo URLROOT; ?>/annonce/create">
+                                <i class="fas fa-plus"></i> Déposer une annonce
                             </a>
                         </li>
                     <?php endif; ?>

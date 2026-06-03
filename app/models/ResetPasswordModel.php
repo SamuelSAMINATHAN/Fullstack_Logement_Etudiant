@@ -134,9 +134,8 @@ class ResetPasswordModel extends Model
      */
     public function deleteTokensByUser($idUtilisateur)
     {
-        $db = $this;
-        $query = "DELETE FROM reset_password WHERE idUtilisateur = :idUtilisateur";
-        return $db->execute($query, ['idUtilisateur' => $idUtilisateur]);
+        $sql = "DELETE FROM reset_password WHERE idUtilisateur = ?";
+        return $this->delete($sql, [$idUtilisateur]);
     }
 
     /**
@@ -145,9 +144,8 @@ class ResetPasswordModel extends Model
      */
     public function deleteExpiredTokens()
     {
-        $db = $this;
-        $query = "DELETE FROM reset_password WHERE expiration < NOW()";
-        return $db->execute($query);
+        $sql = "DELETE FROM reset_password WHERE expiration < NOW()";
+        return $this->delete($sql);
     }
 
     /**
@@ -156,9 +154,8 @@ class ResetPasswordModel extends Model
      */
     public function deleteUsedTokens()
     {
-        $db = $this;
-        $query = "DELETE FROM reset_password WHERE utilise = 1";
-        return $db->execute($query);
+        $sql = "DELETE FROM reset_password WHERE utilise = 1";
+        return $this->delete($sql);
     }
 
     /**

@@ -83,9 +83,8 @@ class AlerteModel extends Model
      */
     public function deleteAlertsByStudent($idEtudiant)
     {
-        $db = $this;
-        $query = "DELETE FROM alerte WHERE idEtudiant = :idEtudiant";
-        return $db->execute($query, ['idEtudiant' => $idEtudiant]);
+        $sql = "DELETE FROM alerte WHERE idEtudiant = ?";
+        return $this->delete($sql, [$idEtudiant]);
     }
 
     /**
@@ -95,10 +94,9 @@ class AlerteModel extends Model
      */
     public function countAlertsByStudent($idEtudiant)
     {
-        $db = $this;
-        $query = "SELECT COUNT(*) as count FROM alerte WHERE idEtudiant = :idEtudiant";
-        $stmt = $db->query($query, ['idEtudiant' => $idEtudiant]);
-        return $stmt ? ($stmt[0]['count'] ?? 0) : 0;
+        $sql = "SELECT COUNT(*) as count FROM alerte WHERE idEtudiant = ?";
+        $result = $this->selectOne($sql, [$idEtudiant]);
+        return $result ? (int)($result['count'] ?? 0) : 0;
     }
 
     /**
@@ -154,12 +152,13 @@ class AlerteModel extends Model
         $db = $this;
         $query = "
             SELECT * FROM alerte
-            WHERE (localisation IS NULL OR localisation = :localisation OR :localisation LIKE CONCAT('%', localisation, '%'))
+            WHERE (localisation IS NULL OR localisation = :loc1 OR :loc2 LIKE CONCAT('%', localisation, '%'))
             AND (budgetMax IS NULL OR budgetMax >= :prix)
             AND (colocation = 0 OR :estColocation = 1)
         ";
         $params = [
-            'localisation' => $annonce['localisation'],
+            'loc1' => $annonce['localisation'],
+            'loc2' => $annonce['localisation'],
             'prix' => $annonce['prix'],
             'estColocation' => $annonce['estColocation']
         ];
@@ -174,8 +173,7 @@ class AlerteModel extends Model
      */
     public function disableAllColocationAlerts()
     {
-        $db = $this;
-        $query = "UPDATE alerte SET colocation = 0 WHERE colocation = 1";
-        return $db->execute($query);
+        $sql = "UPDATE alerte SET colocation = 0 WHERE colocation = 1";
+        return $this->update($sql);
     }
 }

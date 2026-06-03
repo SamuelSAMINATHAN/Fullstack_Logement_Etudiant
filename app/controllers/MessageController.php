@@ -3,177 +3,118 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class MessageController extends Controller
 {
     private $messageModel;
     private $utilisateurModel;
+    private $annonceModel;
 
     public function __construct()
     {
+        $this->requireAuth();
         $this->messageModel = $this->model('MessageModel');
         $this->utilisateurModel = $this->model('UtilisateurModel');
+        $this->annonceModel = $this->model('AnnonceModel');
     }
 
     /**
-     * Affiche la boîte de réception
+     * Envoie un message à un bailleur
      */
-    public function inbox()
+    public function send()
     {
-        $this->requireAuth();
-
-        $messages = $this->messageModel->getUnreadMessages($_SESSION['user_id']);
-        $conversations = $this->messageModel->getConversations($_SESSION['user_id']);
-
-        $data = [
-            'unread_messages' => $messages,
-            'conversations' => $conversations
-        ];
-
-        $this->view('messaging/inbox', $data);
-    }
-
-    /**
-     * Affiche une conversation
-     */
-    public function conversation($idInterlocuteur = null)
-    {
-        $this->requireAuth();
-
-        if ($idInterlocuteur === null) {
-            $this->redirect('/message/inbox');
-        }
-
-        // Vérifier que l'interlocuteur existe
-        $interlocuteur = $this->utilisateurModel->getUserById($idInterlocuteur);
-
-        if (!$interlocuteur) {
-            $this->setFlash('error', 'Utilisateur introuvable.');
-            $this->redirect('/message/inbox');
-        }
-
-        // Récupérer la conversation
-        $messages = $this->messageModel->getConversation($_SESSION['user_id'], $idInterlocuteur);
-
-        // Marquer tous les messages comme lus
-        $this->messageModel->markConversationAsRead($_SESSION['user_id'], $idInterlocuteur);
-
-        $data = [
-            'interlocuteur' => $interlocuteur,
-            'messages' => $messages,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('messaging/conversation', $data);
-    }
-
-    /**
-     * Envoie un message
-     */
-    public function send($idDestinataire = null)
-    {
-        $this->requireAuth();
-
-        if ($idDestinataire === null || !$this->isPost()) {
-            $this->redirect('/message/inbox');
+        if (!$this->isPost()) {
+            $this->redirect('/annonce');
         }
 
         $post = $this->sanitizePost();
 
         if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/message/conversation/' . $idDestinataire);
+            Session::setFlash('error', 'Token CSRF invalide.');
+            $this->redirect('/annonce/detail/' . ($post['idAnnonce'] ?? ''));
         }
 
-        // Vérifier que le destinataire existe
-        $destinataire = $this->utilisateurModel->getUserById($idDestinataire);
+        $idDestinataire = $post['idDestinataire'] ?? null;
+        $idAnnonce = $post['idAnnonce'] ?? null;
+        $contenu = trim($post['contenu'] ?? '');
 
-        if (!$destinataire) {
-            $this->setFlash('error', 'Utilisateur introuvable.');
-            $this->redirect('/message/inbox');
+        if (!$idDestinataire || empty($contenu)) {
+            Session::setFlash('error', 'Le message ne peut pas être vide.');
+            $this->redirect('/annonce/detail/' . $idAnnonce);
         }
 
-        // Vérifier que l'utilisateur ne s'envoie pas de message à lui-même
-        if ($idDestinataire == $_SESSION['user_id']) {
-            $this->setFlash('error', 'Vous ne pouvez pas vous envoyer des messages.');
-            $this->redirect('/message/inbox');
-        }
-
-        $contenu = $post['contenu'] ?? '';
-
-        if (empty($contenu)) {
-            $this->setFlash('error', 'Le message ne peut pas être vide.');
-            $this->redirect('/message/conversation/' . $idDestinataire);
-        }
-
-        if (strlen($contenu) > 5000) {
-            $this->setFlash('error', 'Le message est trop long (max 5000 caractères).');
-            $this->redirect('/message/conversation/' . $idDestinataire);
-        }
+        // Préparer les données du message
+        $data = [
+            'contenu' => $contenu,
+            'dateEnvoi' => date('Y-m-d H:i:s'),
+            'estLu' => 0,
+            'idExpediteur' => $_SESSION['user_id'],
+            'idDestinataire' => $idDestinataire
+        ];
 
         try {
-            $data = [
-                'idExpediteur' => $_SESSION['user_id'],
-                'idDestinataire' => $idDestinataire,
-                'contenu' => $contenu,
-                'estLu' => 0
-            ];
-
-            $idMessage = $this->messageModel->createMessage($data);
-
-            if (!$idMessage) {
-                $this->setFlash('error', 'Erreur lors de l\'envoi du message.');
-                $this->redirect('/message/conversation/' . $idDestinataire);
+            if ($this->messageModel->createMessage($data)) {
+                Session::setFlash('success', 'Votre message a été envoyé.');
+            } else {
+                Session::setFlash('error', 'Une erreur est survenue lors de l\'envoi du message.');
             }
-
-            $this->setFlash('success', 'Message envoyé !');
-            $this->redirect('/message/conversation/' . $idDestinataire);
         } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de l\'envoi : ' . $e->getMessage());
+            Session::setFlash('error', 'Erreur technique : ' . $e->getMessage());
+        }
+
+        if ($idAnnonce) {
+            $this->redirect('/annonce/detail/' . $idAnnonce);
+        } else {
             $this->redirect('/message/conversation/' . $idDestinataire);
         }
     }
 
     /**
-     * Supprime une conversation
+     * Affiche la liste des conversations (Inbox)
      */
-    public function deleteConversation($idInterlocuteur = null)
+    public function index()
     {
-        $this->requireAuth();
-
-        if ($idInterlocuteur === null) {
-            $this->redirect('/message/inbox');
-        }
-
-        $interlocuteur = $this->utilisateurModel->getUserById($idInterlocuteur);
-
-        if (!$interlocuteur) {
-            $this->setFlash('error', 'Utilisateur introuvable.');
-            $this->redirect('/message/inbox');
-        }
-
-        try {
-            $this->messageModel->deleteConversation($_SESSION['user_id'], $idInterlocuteur);
-            $this->setFlash('success', 'Conversation supprimée.');
-            $this->redirect('/message/inbox');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la suppression.');
-            $this->redirect('/message/inbox');
-        }
+        $conversations = $this->messageModel->getConversations($_SESSION['user_id']);
+        $this->view('user/messages', ['conversations' => $conversations]);
     }
 
     /**
-     * Récupère le nombre de messages non lus
+     * Alias pour index (Inbox)
      */
-    public function getUnreadCount()
+    public function inbox()
     {
-        if (!$this->isLoggedIn()) {
-            echo json_encode(['count' => 0]);
-            return;
+        $this->index();
+    }
+
+    /**
+     * Affiche une conversation spécifique
+     */
+/**
+     * Affiche une conversation spécifique
+     */
+    public function conversation($idOther)
+    {
+        if (!$idOther) {
+            $this->redirect('/message/inbox');
         }
 
-        $count = $this->messageModel->countUnreadMessages($_SESSION['user_id']);
-        header('Content-Type: application/json');
-        echo json_encode(['count' => $count]);
+        // Marquer comme lu
+        $this->messageModel->markConversationAsRead($_SESSION['user_id'], $idOther);
+
+        $messages = $this->messageModel->getConversation($_SESSION['user_id'], $idOther);
+        
+        // PROPRE & AUTORISÉ : On appelle la nouvelle méthode publique du modèle
+        $otherUser = $this->utilisateurModel->getUserById($idOther);
+
+        if (!$otherUser) {
+            $this->redirect('/message/inbox');
+        }
+
+        $this->view('user/conversation', [
+            'messages' => $messages,
+            'otherUser' => $otherUser
+        ]);
     }
 }

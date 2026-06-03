@@ -16,13 +16,13 @@ class FavorisModel extends Model
     }
 
     /**
-     * Récupère les favoris d'un étudiant
+     * Récupère les favoris d'un étudiant (Sécurisé avec les détails de l'annonce)
      * @param int $idEtudiant
      * @return array
      */
     public function getFavoritesByStudent($idEtudiant)
     {
-        return $this->findWhere('favoris', 'idEtudiant', $idEtudiant);
+        return $this->getFavoritesWithAnnouncements($idEtudiant);
     }
 
     /**
@@ -65,11 +65,8 @@ class FavorisModel extends Model
             return true; // Déjà en favori
         }
 
-        $data = [
-            'idEtudiant' => $idEtudiant,
-            'idAnnonce' => $idAnnonce
-        ];
-        return (bool) $this->create('favoris', $data);
+        $sql = "INSERT INTO favoris (idEtudiant, idAnnonce) VALUES (?, ?)";
+        return $this->insert($sql, [$idEtudiant, $idAnnonce]) > 0;
     }
 
     /**
@@ -80,12 +77,8 @@ class FavorisModel extends Model
      */
     public function removeFavorite($idEtudiant, $idAnnonce)
     {
-        $db = $this;
-        $query = "
-            DELETE FROM favoris
-            WHERE idEtudiant = :idEtudiant AND idAnnonce = :idAnnonce
-        ";
-        return $db->execute($query, ['idEtudiant' => $idEtudiant, 'idAnnonce' => $idAnnonce]);
+        $sql = "DELETE FROM favoris WHERE idEtudiant = ? AND idAnnonce = ?";
+        return $this->delete($sql, [$idEtudiant, $idAnnonce]) > 0;
     }
 
     /**
@@ -115,10 +108,9 @@ class FavorisModel extends Model
      */
     public function countFavoritesByStudent($idEtudiant)
     {
-        $db = $this;
-        $query = "SELECT COUNT(*) as count FROM favoris WHERE idEtudiant = :idEtudiant";
-        $stmt = $db->query($query, ['idEtudiant' => $idEtudiant]);
-        return $stmt ? ($stmt[0]['count'] ?? 0) : 0;
+        $sql = "SELECT COUNT(*) as count FROM favoris WHERE idEtudiant = ?";
+        $result = $this->selectOne($sql, [$idEtudiant]);
+        return $result ? (int)($result['count'] ?? 0) : 0;
     }
 
     /**

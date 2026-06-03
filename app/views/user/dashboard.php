@@ -64,14 +64,16 @@
                         <div class="card-body text-center d-flex flex-column justify-content-center">
                             <h5 class="card-title">Mes annonces</h5>
                             <h2 class="display-4 mb-0"><?php echo isset($stats['annonces_count']) ? $stats['annonces_count'] : 0; ?></h2>
+                            <a href="<?= URLROOT ?>/annonce/mesAnnonces" class="text-white mt-2 small text-decoration-none">Gérer mes annonces <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="card text-white bg-success h-100 shadow-sm">
                         <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Candidatures reçues</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['candidatures_reçues']) ? $stats['candidatures_reçues'] : 0; ?></h2>
+                            <h5 class="card-title">Messages non lus</h5>
+                            <h2 class="display-4 mb-0"><?php echo isset($stats['messages_count']) ? $stats['messages_count'] : 0; ?></h2>
+                            <a href="<?= URLROOT ?>/message/inbox" class="text-white mt-2 small text-decoration-none">Voir mes messages <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
                 </div>

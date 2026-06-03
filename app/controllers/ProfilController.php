@@ -11,12 +11,20 @@ class ProfilController extends Controller
     private $utilisateurModel;
     private $etudiantModel;
     private $bailleurModel;
+    private $annonceModel;
+    private $favorisModel;
+    private $messageModel;
+    private $alerteModel;
 
     public function __construct()
     {
         $this->utilisateurModel = $this->model('UtilisateurModel');
         $this->etudiantModel = $this->model('EtudiantModel');
         $this->bailleurModel = $this->model('BailleurModel');
+        $this->annonceModel = $this->model('AnnonceModel');
+        $this->favorisModel = $this->model('FavorisModel');
+        $this->messageModel = $this->model('MessageModel');
+        $this->alerteModel = $this->model('AlerteModel');
     }
 
     /**
@@ -57,13 +65,24 @@ class ProfilController extends Controller
         }
 
         $data = [
-            'user' => $user
+            'user' => $user,
+            'stats' => [],
+            'activites' => []
         ];
 
         if ($user['role'] === 'etudiant') {
             $data['etudiant'] = $this->etudiantModel->getStudentById($_SESSION['user_id']);
+            $data['stats'] = [
+                'favoris_count' => $this->favorisModel->countFavoritesByStudent($_SESSION['user_id']),
+                'alertes_count' => $this->alerteModel->countAlertsByStudent($_SESSION['user_id'])
+            ];
         } else {
             $data['bailleur'] = $this->bailleurModel->getLandlordById($_SESSION['user_id']);
+            $data['stats'] = [
+                'annonces_count' => $this->annonceModel->countAnnouncementsByLandlord($_SESSION['user_id']),
+                'messages_count' => $this->messageModel->countUnreadMessages($_SESSION['user_id']),
+                'vues_totales' => $this->annonceModel->getTotalViewsByLandlord($_SESSION['user_id'])
+            ];
         }
 
         $this->view('user/dashboard', $data);

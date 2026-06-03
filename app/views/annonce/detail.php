@@ -152,13 +152,16 @@
                 </div>
 
                 <div class="d-grid gap-2 mb-4">
-                    <button class="btn btn-primary" onclick="alert('Fonctionnalité de messagerie bientôt disponible !')">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#contactModal">
                         <i class="fas fa-envelope me-2"></i> Contacter le bailleur
                     </button>
                     <?php if ($this->isLoggedIn() && $_SESSION['user_role'] === 'etudiant'): ?>
                         <button class="btn btn-outline-danger btn-toggle-favoris <?= $annonce['est_favori'] ? 'active' : '' ?>" data-id="<?= $annonce['idAnnonce'] ?>">
                             <i class="<?= $annonce['est_favori'] ? 'fas' : 'far' ?> fa-heart me-2"></i>
-                            <?= $annonce['est_favori'] ? 'Dans mes favoris' : 'Ajouter aux favoris' ?>
+                            <span class="btn-text"><?= $annonce['est_favori'] ? 'Dans mes favoris' : 'Ajouter aux favoris' ?></span>
+                        </button>
+                        <button class="btn btn-link text-danger btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#reportModal">
+                            <i class="fas fa-flag me-1"></i> Signaler cette annonce
                         </button>
                     <?php endif; ?>
                 </div>
@@ -179,6 +182,46 @@
     </div>
 </div>
 
+<!-- Modal de Contact -->
+<div class="modal fade" id="contactModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contacter <?= Security::escape($annonce['prenom']) ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?= URLROOT ?>/message/send" method="POST">
+                <div class="modal-body">
+                    <?php if (!$this->isLoggedIn()): ?>
+                        <div class="alert alert-warning">
+                            Vous devez être connecté pour envoyer un message.
+                            <a href="<?= URLROOT ?>/auth/login" class="alert-link">Se connecter</a>
+                        </div>
+                    <?php else: ?>
+                        <input type="hidden" name="csrf_token" value="<?= Security::csrfToken() ?>">
+                        <input type="hidden" name="idDestinataire" value="<?= $annonce['idBailleur'] ?>">
+                        <input type="hidden" name="idAnnonce" value="<?= $annonce['idAnnonce'] ?>">
+                        
+                        <div class="mb-3">
+                            <label for="contenu" class="form-label">Votre message</label>
+                            <textarea class="form-control" id="contenu" name="contenu" rows="5" required placeholder="Bonjour, je suis intéressé par votre annonce..."></textarea>
+                        </div>
+                        <div class="form-text">
+                            Soyez poli et précis pour obtenir une réponse rapide.
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <?php if ($this->isLoggedIn()): ?>
+                        <button type="submit" class="btn btn-primary">Envoyer le message</button>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script src="<?= URLROOT ?>/js/favoris.js"></script>
 <script>
 function copyToClipboard(text) {
@@ -189,5 +232,42 @@ function copyToClipboard(text) {
     });
 }
 </script>
+
+<!-- Modal de Signalement -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Signaler cette annonce</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?= URLROOT ?>/signalement/send" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= Security::csrfToken() ?>">
+                    <input type="hidden" name="idAnnonce" value="<?= $annonce['idAnnonce'] ?>">
+                    
+                    <div class="mb-3">
+                        <label for="motif" class="form-label">Pourquoi signalez-vous cette annonce ?</label>
+                        <select name="motif" id="motif" class="form-select" required>
+                            <option value="">Choisissez un motif...</option>
+                            <option value="Fraude / Arnaque">Fraude / Arnaque</option>
+                            <option value="Contenu inapproprié">Contenu inapproprié</option>
+                            <option value="Annonce déjà louée">Annonce déjà louée</option>
+                            <option value="Informations erronées">Informations erronées</option>
+                            <option value="Autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-text">
+                        Votre signalement sera examiné par notre équipe de modération.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Signaler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <?php require APPROOT . '/views/layout/footer.php'; ?>

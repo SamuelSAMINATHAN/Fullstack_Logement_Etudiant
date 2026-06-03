@@ -12,7 +12,10 @@ class BailleurModel extends Model
      */
     public function getAllLandlords()
     {
-        return $this->findAll('bailleur');
+        $sql = "SELECT u.*, b.*
+                FROM utilisateur u
+                JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur";
+        return $this->select($sql);
     }
 
     /**
@@ -22,7 +25,12 @@ class BailleurModel extends Model
      */
     public function getLandlordById($idUtilisateur)
     {
-        return $this->findById('bailleur', 'idUtilisateur', $idUtilisateur);
+        $sql = "SELECT u.*, b.*
+                FROM utilisateur u
+                JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
+                WHERE u.idUtilisateur = ?";
+        $result = $this->select($sql, [$idUtilisateur]);
+        return $result ? $result[0] : null;
     }
 
     /**
@@ -32,15 +40,12 @@ class BailleurModel extends Model
      */
     public function getLandlordWithUser($idUtilisateur)
     {
-        $db = $this;
-        $query = "
-            SELECT u.*, b.*
-            FROM utilisateur u
-            JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
-            WHERE u.idUtilisateur = :idUtilisateur
-        ";
-        $stmt = $db->query($query, ['idUtilisateur' => $idUtilisateur]);
-        return $stmt ? $stmt[0] ?? null : null;
+        $sql = "SELECT u.*, b.*
+                FROM utilisateur u
+                JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
+                WHERE u.idUtilisateur = ?";
+        $result = $this->select($sql, [$idUtilisateur]);
+        return $result ? $result[0] : null;
     }
 
     /**
@@ -49,7 +54,11 @@ class BailleurModel extends Model
      */
     public function getVerifiedLandlords()
     {
-        return $this->findWhere('bailleur', 'estVerifie', 1);
+        $sql = "SELECT u.*, b.*
+                FROM utilisateur u
+                JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
+                WHERE b.estVerifie = 1";
+        return $this->select($sql);
     }
 
     /**
@@ -58,19 +67,62 @@ class BailleurModel extends Model
      */
     public function getActiveLandlords()
     {
-        return $this->findWhere('bailleur', 'estShadowban', 0);
+        $sql = "SELECT u.*, b.*
+                FROM utilisateur u
+                JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
+                WHERE b.estShadowban = 0";
+        return $this->select($sql);
     }
 
     /**
-     * Crée un nouveau profil bailleur
+     * Enregistre un nouveau bailleur
+     * @param array $userData Données de l'utilisateur (nom, prenom, email, mdp, role, date_acceptation_cgu)
+     * @return int|false ID du nouvel utilisateur ou false en cas d'erreur
+     */
+    public function registerLandlord($userData)
+    {
+        // 1. Créer l'utilisateur dans la table `utilisateur`
+        $userId = $this->create('utilisateur', [
+            'nom' => $userData['nom'],
+            'prenom' => $userData['prenom'],
+            'email' => $userData['email'],
+            'mdp' => password_hash($userData['mdp'], PASSWORD_BCRYPT),
+            'role' => $userData['role'],
+            'date_acceptation_cgu' => $userData['date_acceptation_cgu'] ?? date('Y-m-d H:i:s')
+        ]);
+
+        if (!$userId) {
+            return false;
+        }
+
+        // 2. Créer le profil bailleur dans la table `bailleur`
+        $bailleurData = [
+            'idUtilisateur' => $userId,
+            'estVerifie' => 0,
+            'estShadowban' => 0
+        ];
+
+        $this->create('bailleur', $bailleurData);
+
+        return $userId;
+    }
+
+    /**
+     * Crée un nouveau profil bailleur (si l'utilisateur existe déjà)
      * @param int $idUtilisateur
      * @param array $data Données spécifiques au bailleur (optionnel)
      * @return bool
      */
     public function createLandlord($idUtilisateur, $data = [])
     {
-        $data['idUtilisateur'] = $idUtilisateur;
-        return $this->create('bailleur', $data);
+        $defaultData = [
+            'idUtilisateur' => $idUtilisateur,
+            'estVerifie' => 0,
+            'estShadowban' => 0
+        ];
+
+        $bailleurData = array_merge($defaultData, $data);
+        return $this->create('bailleur', $bailleurData);
     }
 
     /**
@@ -123,5 +175,17 @@ class BailleurModel extends Model
     public function deleteLandlord($idUtilisateur)
     {
         return $this->deleteById('bailleur', 'idUtilisateur', $idUtilisateur);
+    }
+
+    /**
+     * Vérifie si un utilisateur est un bailleur
+     * @param int $idUtilisateur
+     * @return bool
+     */
+    public function isLandlord($idUtilisateur)
+    {
+        $sql = "SELECT COUNT(*) as count FROM bailleur WHERE idUtilisateur = ?";
+        $result = $this->selectOne($sql, [$idUtilisateur]);
+        return $result && $result['count'] > 0;
     }
 }

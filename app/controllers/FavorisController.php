@@ -48,30 +48,50 @@ class FavorisController extends Controller
         $this->view('user/favorites', ['favoris' => $favoris]);
     }
 
-    /**
-     * Action AJAX : Ajouter/Retirer des favoris
-     */
-    public function toggle($idAnnonce = null)
+    public function toggle()
     {
+        // Nettoie les affichages parasites pour éviter de casser le JSON
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
         header('Content-Type: application/json');
         
-        if (!$idAnnonce) {
-            echo json_encode(['success' => false, 'message' => 'ID annonce manquant']);
-            return;
-        }
-
-        $idEtudiant = $_SESSION['user_id'];
-        
         try {
+            // On récupère l'ID envoyé par le JavaScript
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
+            
+            $idAnnonce = $data['idAnnonce'] ?? $_POST['idAnnonce'] ?? null;
+            
+            if (!$idAnnonce) {
+                echo json_encode(['success' => false, 'message' => 'ID annonce manquant ou invalide.']);
+                exit;
+            }
+
+            $idEtudiant = $_SESSION['user_id'] ?? null;
+            if (!$idEtudiant || ($_SESSION['user_role'] ?? '') !== 'etudiant') {
+                echo json_encode(['success' => false, 'message' => 'Action réservée aux étudiants connectés.']);
+                exit;
+            }
+            
             if ($this->favorisModel->isFavorite($idEtudiant, $idAnnonce)) {
-                $this->favorisModel->removeFavorite($idEtudiant, $idAnnonce);
-                echo json_encode(['success' => true, 'action' => 'removed', 'message' => 'Retiré des favoris']);
+                if ($this->favorisModel->removeFavorite($idEtudiant, $idAnnonce)) {
+                    echo json_encode(['success' => true, 'action' => 'removed', 'message' => 'Retiré des favoris']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Erreur lors du retrait du favori.']);
+                }
             } else {
-                $this->favorisModel->addFavorite($idEtudiant, $idAnnonce);
-                echo json_encode(['success' => true, 'action' => 'added', 'message' => 'Ajouté aux favoris']);
+                if ($this->favorisModel->addFavorite($idEtudiant, $idAnnonce)) {
+                    echo json_encode(['success' => true, 'action' => 'added', 'message' => 'Ajouté aux favoris']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'ajout du favori.']);
+                }
             }
         } catch (\Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()]);
+            error_log("[Favoris] Erreur : " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Erreur technique : ' . $e->getMessage()]);
         }
+        exit;
     }
 }

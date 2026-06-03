@@ -205,8 +205,8 @@ function displayListings(listings) {
                 <div class="card-image" style="background-image: url('${photoUrl}'); background-size: cover; background-position: center;">
                     <img src="${photoUrl}" alt="${escapeHtml(listing.titre)}" style="opacity: 0; width: 100%; height: 100%;">
                     <div class="card-badge">${typeIcon} ${typeLabel}</div>
-                    <button class="heart-btn heart-empty" onclick="event.stopPropagation(); window.toggleHeart(this)">
-                        <i class="far fa-heart"></i>
+                    <button class="heart-btn ${listing.est_favori ? 'active' : 'heart-empty'}" onclick="event.stopPropagation(); window.toggleHeart(this)">
+                        <i class="${listing.est_favori ? 'fas' : 'far'} fa-heart"></i>
                     </button>
                 </div>
                 <div class="card-content">
@@ -294,18 +294,44 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
-// J'aime/Je n'aime pas
+// Gérer le clic sur le cœur (Favoris)
 window.toggleHeart = function(btn) {
+    const card = btn.closest('.card');
+    const idAnnonce = card.dataset.id;
     const icon = btn.querySelector('i');
-    if (icon.classList.contains('far')) {
-        icon.classList.remove('far');
-        icon.classList.add('fas');
-        showToast('Ajouté aux favoris ❤️');
-    } else {
-        icon.classList.remove('fas');
-        icon.classList.add('far');
-        showToast('Retiré des favoris 💔');
-    }
+    
+    const url = `${URLROOT}/favoris/toggle`;
+
+    // Appel API pour sauvegarder le favori
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ idAnnonce: idAnnonce })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'added') {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.classList.add('active');
+                showToast('Ajouté aux favoris ❤️');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.classList.remove('active');
+                showToast('Retiré des favoris 💔');
+            }
+        } else {
+            showToast(data.message || 'Erreur lors de la mise à jour des favoris');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Impossible de mettre à jour le favori.');
+    });
 };
 
 // Voir les détails d'une annonce

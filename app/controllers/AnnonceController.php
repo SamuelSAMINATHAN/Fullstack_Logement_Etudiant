@@ -37,6 +37,11 @@ class AnnonceController extends Controller
 
         $annonces = $this->annonceModel->searchAnnouncements($filters);
 
+        // Filtrer les annonces de bailleurs shadowbannis
+        $annonces = array_filter($annonces, function($annonce) {
+            return $annonce['estShadowban'] == 0;
+        });
+
         foreach ($annonces as &$annonce) {
             $id = $annonce['idAnnonce'];
             $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
@@ -58,6 +63,9 @@ class AnnonceController extends Controller
             Session::setFlash('error', 'Annonce introuvable.');
             $this->redirect('/annonce');
         }
+
+        // Incrémenter le compteur de vues
+        $this->annonceModel->incrementViews($id);
 
         // Si le bailleur est shadowbanni, on ne montre l'annonce qu'à lui-même ou à un admin
         if ($annonce['estShadowban'] == 1) {
@@ -97,6 +105,9 @@ class AnnonceController extends Controller
      */
     public function apisearch()
     {
+        // Nettoie les affichages parasites
+        if (ob_get_length()) ob_clean();
+        
         header('Content-Type: application/json');
         
         $filters = [];
@@ -106,7 +117,7 @@ class AnnonceController extends Controller
         
         // Types de logement
         if (!empty($_GET['types'])) {
-            $filters['types'] = $_GET['types']; // On laisse en string pour le modèle
+            $filters['types'] = $_GET['types'];
         }
         
         if (!empty($_GET['rooms']) && $_GET['rooms'] !== '0') {
@@ -115,19 +126,24 @@ class AnnonceController extends Controller
         
         // Équipements (booléens)
         if (isset($_GET['meuble'])) $filters['meuble'] = true;
-        if (isset($_GET['ascenseur'])) $filters['ascenseur'] = true;
-        if (isset($_GET['parking'])) $filters['parking'] = true;
-        if (isset($_GET['balcony'])) $filters['balcony'] = true;
-        if (isset($_GET['animaux'])) $filters['animaux'] = true;
-        if (isset($_GET['pmr'])) $filters['pmr'] = true;
 
         try {
             $annonces = $this->annonceModel->searchAnnouncements($filters);
             
+            // Filtrer les annonces de bailleurs shadowbannis
+            $annonces = array_filter($annonces, function($annonce) {
+                return $annonce['estShadowban'] == 0;
+            });
+
+            $idEtudiant = ($this->isLoggedIn() && $_SESSION['user_role'] === 'etudiant') ? $_SESSION['user_id'] : null;
+
             foreach ($annonces as &$annonce) {
                 $id = $annonce['idAnnonce'];
                 $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
                 $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($id);
+                
+                // On ajoute l'info "est_favori" pour le JS
+                $annonce['est_favori'] = $idEtudiant ? $this->favorisModel->isFavorite($idEtudiant, $id) : false;
             }
             
             echo json_encode(['success' => true, 'data' => $annonces]);
@@ -135,6 +151,7 @@ class AnnonceController extends Controller
             http_response_code(500);
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
+        exit;
     }
 
     /**
