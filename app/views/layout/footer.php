@@ -7,7 +7,7 @@
         <div class="footer-section">
             <h4>Liens utiles</h4>
             <a href="<?php echo URLROOT; ?>/page/about">À propos</a>
-            <a href="<?php echo URLROOT; ?>/contact">Contact</a>
+            <a href="<?php echo URLROOT; ?>/page/contact">Contact</a>
             <a href="<?php echo URLROOT; ?>/page/faq">FAQ</a>
             <a href="<?php echo URLROOT; ?>/page/cgu">CGU</a>
         </div>

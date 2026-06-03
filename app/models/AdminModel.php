@@ -52,16 +52,22 @@ class AdminModel extends Model
      * @param array $data Données de l'administrateur
      * @return int ID du nouvel administrateur
      */
-    public function createAdmin($data)
+/**
+     * Crée un nouvel administrateur
+     * @param array $data Données de l'administrateur
+     * @return bool True si l'insertion a réussi
+     */
+public function createAdmin($data)
     {
-        // Hasher le mot de passe
         if (isset($data['motDePasse'])) {
             $data['motDePasse'] = Security::hashPassword($data['motDePasse']);
         }
 
-        return $this->create('administrateur', $data);
-    }
+        $result = $this->create('administrateur', $data);
 
+        // Si ce n'est pas false, c'est que l'insertion s'est faite (même si lastInsertId renvoie 0)
+        return $result !== false;
+    }
     /**
      * Met à jour un administrateur
      * @param int $idAdmin

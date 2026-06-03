@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - Dorocho Logements</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -69,7 +67,6 @@
 
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
                 <div class="position-sticky">
                     <ul class="nav flex-column">
@@ -86,6 +83,21 @@
                         <li class="nav-item">
                             <a class="nav-link" href="<?= URLROOT ?>/admin/verifyBailleurs">
                                 <i class="fas fa-user-check"></i> Vérif. Bailleurs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= URLROOT ?>/admin/admins">
+                                <i class="fas fa-user-shield"></i> Administrateurs
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= URLROOT ?>/admin/logements">
+                                <i class="fas fa-home"></i> Gestion Logements
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= URLROOT ?>/admin/messages">
+                                <i class="fas fa-envelope"></i> Messages reçus
                             </a>
                         </li>
                         <li class="nav-item">
@@ -112,7 +124,6 @@
                 </div>
             </nav>
 
-            <!-- Main Content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 p-0">
                 <div class="main-content">
                     <?php if (isset($success_message) && $success_message): ?>

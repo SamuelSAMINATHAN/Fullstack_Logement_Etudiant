@@ -3,26 +3,7 @@
 <div class="row">
     <!-- Menu latéral -->
     <div class="col-md-3 mb-4">
-        <div class="list-group shadow-sm">
-            <a href="<?php echo URLROOT; ?>/profil/dashboard" class="list-group-item list-group-item-action active">
-                <i class="fas fa-tachometer-alt me-2"></i> Tableau de bord
-            </a>
-            <a href="<?php echo URLROOT; ?>/profil/profile" class="list-group-item list-group-item-action">
-                <i class="fas fa-user me-2"></i> Mon Profil
-            </a>
-            <?php if ($_SESSION['user_role'] === 'etudiant'): ?>
-                <a href="<?php echo URLROOT; ?>/favoris" class="list-group-item list-group-item-action">
-                    <i class="fas fa-heart me-2"></i> Mes Favoris
-                </a>
-            <?php elseif ($_SESSION['user_role'] === 'bailleur'): ?>
-                <a href="<?php echo URLROOT; ?>/annonce/mes-annonces" class="list-group-item list-group-item-action">
-                    <i class="fas fa-building me-2"></i> Mes Annonces
-                </a>
-            <?php endif; ?>
-            <a href="<?php echo URLROOT; ?>/profil/changePassword" class="list-group-item list-group-item-action">
-                <i class="fas fa-lock me-2"></i> Sécurité
-            </a>
-        </div>
+        <?php require APPROOT . '/views/user/sidebar.php'; ?>
     </div>
 
     <!-- Contenu principal -->
@@ -30,51 +11,24 @@
         <h2 class="mb-4">Bonjour, <?php echo Security::escape($_SESSION['user_prenom']); ?> !</h2>
         
         <div class="row mb-4">
-            <?php if ($_SESSION['user_role'] === 'etudiant'): ?>
-                <div class="col-md-6 mb-3">
-                    <div class="card text-white bg-primary h-100 shadow-sm">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Favoris</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['favoris_count']) ? $stats['favoris_count'] : 0; ?></h2>
-                        </div>
+            <div class="col-md-6 mb-3">
+                <div class="card text-white bg-primary h-100 shadow-sm">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <h5 class="card-title">Mes Favoris</h5>
+                        <h2 class="display-4 mb-0"><?php echo isset($stats['favoris_count']) ? $stats['favoris_count'] : 0; ?></h2>
+                        <a href="<?= URLROOT ?>/favoris" class="text-white mt-2 small text-decoration-none">Voir mes favoris <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <div class="card text-white bg-success h-100 shadow-sm">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Candidatures</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['candidatures_count']) ? $stats['candidatures_count'] : 0; ?></h2>
-                        </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card text-white bg-success h-100 shadow-sm">
+                    <div class="card-body text-center d-flex flex-column justify-content-center">
+                        <h5 class="card-title">Messages non lus</h5>
+                        <h2 class="display-4 mb-0"><?php echo isset($stats['messages_count']) ? $stats['messages_count'] : 0; ?></h2>
+                        <a href="<?= URLROOT ?>/message/inbox" class="text-white mt-2 small text-decoration-none">Voir mes messages <i class="fas fa-arrow-right"></i></a>
                     </div>
                 </div>
-            <?php elseif ($_SESSION['user_role'] === 'bailleur'): ?>
-                <div class="col-md-4 mb-3">
-                    <div class="card text-white bg-primary h-100 shadow-sm">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Mes annonces</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['annonces_count']) ? $stats['annonces_count'] : 0; ?></h2>
-                            <a href="<?= URLROOT ?>/annonce/mesAnnonces" class="text-white mt-2 small text-decoration-none">Gérer mes annonces <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card text-white bg-success h-100 shadow-sm">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Messages non lus</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['messages_count']) ? $stats['messages_count'] : 0; ?></h2>
-                            <a href="<?= URLROOT ?>/message/inbox" class="text-white mt-2 small text-decoration-none">Voir mes messages <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <div class="card text-white bg-warning h-100 shadow-sm">
-                        <div class="card-body text-center d-flex flex-column justify-content-center">
-                            <h5 class="card-title">Vues sur mes annonces</h5>
-                            <h2 class="display-4 mb-0"><?php echo isset($stats['vues_totales']) ? $stats['vues_totales'] : 0; ?></h2>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
+            </div>
         </div>
         
         <div class="card shadow-sm">

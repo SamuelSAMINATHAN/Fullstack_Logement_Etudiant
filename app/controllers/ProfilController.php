@@ -71,17 +71,14 @@ class ProfilController extends Controller
 
         if ($user['role'] === 'etudiant') {
             $data['etudiant'] = $this->etudiantModel->getStudentById($_SESSION['user_id']);
-            $data['stats'] = [
-                'favoris_count' => $this->favorisModel->countFavoritesByStudent($_SESSION['user_id'])
-            ];
         } else {
             $data['bailleur'] = $this->bailleurModel->getLandlordById($_SESSION['user_id']);
-            $data['stats'] = [
-                'annonces_count' => $this->annonceModel->countAnnouncementsByLandlord($_SESSION['user_id']),
-                'messages_count' => $this->messageModel->countUnreadMessages($_SESSION['user_id']),
-                'vues_totales' => $this->annonceModel->getTotalViewsByLandlord($_SESSION['user_id'])
-            ];
         }
+
+        $data['stats'] = [
+            'favoris_count' => $this->favorisModel->countFavoritesByStudent($_SESSION['user_id']),
+            'messages_count' => $this->messageModel->countUnreadMessages($_SESSION['user_id'])
+        ];
 
         $this->view('user/dashboard', $data);
     }

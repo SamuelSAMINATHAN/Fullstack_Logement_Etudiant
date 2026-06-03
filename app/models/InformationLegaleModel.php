@@ -43,7 +43,8 @@ class InformationLegaleModel extends Model
      */
     public function getInformationByTitle($titre)
     {
-        return $this->findWhere('informationlegale', 'titre', $titre);
+        $sql = "SELECT * FROM informationlegale WHERE titre = ?";
+        return $this->selectOne($sql, [$titre]);
     }
 
     /**

@@ -24,17 +24,50 @@
                         <label for="sujet" class="form-label">Sujet</label>
                         <select class="form-select" id="sujet" name="sujet" required>
                             <option value="">Choisissez un sujet...</option>
-                            <option value="support">Problème technique / Support</option>
-                            <option value="signalement">Signaler une annonce / un utilisateur</option>
-                            <option value="partenariat">Partenariat</option>
-                            <option value="autre">Autre</option>
+                            <option value="Signaler un utilisateur">Signaler un utilisateur</option>
+                            <option value="Problèmes techniques et support">Problèmes techniques et support</option>
+                            <option value="Partenariat">Partenariat</option>
+                            <option value="Vérification bailleur">Vérification bailleur</option>
                         </select>
+                    </div>
+
+                    <!-- Champ dynamique pour signalement -->
+                    <div class="mb-3 d-none" id="div-signalement">
+                        <label for="email_signale" class="form-label">Adresse email de l'utilisateur à signaler</label>
+                        <input type="email" class="form-control" id="email_signale" placeholder="exemple@mail.com">
                     </div>
                     
                     <div class="mb-4">
                         <label for="message" class="form-label">Votre message</label>
                         <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
                     </div>
+
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const sujetSelect = document.getElementById('sujet');
+                        const divSignalement = document.getElementById('div-signalement');
+                        const inputEmailSignale = document.getElementById('email_signale');
+                        const textareaMessage = document.getElementById('message');
+                        const form = sujetSelect.closest('form');
+
+                        sujetSelect.addEventListener('change', function() {
+                            if (this.value === 'Signaler un utilisateur') {
+                                divSignalement.classList.remove('d-none');
+                                inputEmailSignale.required = true;
+                            } else {
+                                divSignalement.classList.add('d-none');
+                                inputEmailSignale.required = false;
+                            }
+                        });
+
+                        form.addEventListener('submit', function(e) {
+                            if (sujetSelect.value === 'Signaler un utilisateur' && inputEmailSignale.value) {
+                                const emailText = "\n\n--- UTILISATEUR SIGNALÉ : " + inputEmailSignale.value + " ---";
+                                textareaMessage.value += emailText;
+                            }
+                        });
+                    });
+                    </script>
                     
                     <button type="submit" class="btn btn-primary w-100">
                         <i class="fas fa-paper-plane"></i> Envoyer le message

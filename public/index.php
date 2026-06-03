@@ -46,6 +46,7 @@ $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
 $url = filter_var($url, FILTER_SANITIZE_URL);
 $urlParams = explode('/', $url);
 
+
 // Détermination du contrôleur (par défaut : HomeController)
 $controllerName = 'PageController';
 if (!empty($urlParams[0])) {

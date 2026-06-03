@@ -1,30 +1,51 @@
 <?php require APPROOT . '/views/layout/admin_header.php'; ?>
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">CGU & Mentions Légales</h1>
+    <h1 class="h2">Gestion des Textes Légaux</h1>
+    <a href="<?= URLROOT ?>/admin/addLegal" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i> Ajouter un texte légal
+    </a>
 </div>
 
-<div class="row g-4">
-    <?php foreach ($infos as $info): ?>
-    <div class="col-md-6">
-        <div class="card h-100 shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><?= \App\Core\Security::escape($info['titre']) ?></h5>
-                <span class="badge bg-light text-dark small">Mis à jour le <?= date('d/m/Y', strtotime($info['dateMiseAJour'])) ?></span>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <?php if (!empty($infos)): ?>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Titre</th>
+                            <th>Dernière mise à jour</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($infos as $info): ?>
+                        <tr>
+                            <td>
+                                <h6 class="mb-0"><?= \App\Core\Security::escape($info['titre']) ?></h6>
+                            </td>
+                            <td>
+                                <span class="text-muted small">
+                                    <?= !empty($info['dateMiseAJour']) ? date('d/m/Y H:i', strtotime($info['dateMiseAJour'])) : 'Jamais' ?>
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="<?= URLROOT ?>/admin/editLegal/<?= $info['idInfo'] ?>" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit me-1"></i> Modifier
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
-            <div class="card-body">
-                <div class="text-muted small mb-3" style="height: 100px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;">
-                    <?= strip_tags($info['contenu']) ?>
-                </div>
-                <div class="d-grid">
-                    <a href="<?= URLROOT ?>/admin/editLegal/<?= $info['idInfo'] ?>" class="btn btn-outline-primary">
-                        <i class="fas fa-edit me-2"></i> Modifier le contenu
-                    </a>
-                </div>
+        <?php else: ?>
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle me-2"></i> Aucun texte légal trouvé en base de données.
             </div>
-        </div>
+        <?php endif; ?>
     </div>
-    <?php endforeach; ?>
 </div>
 
 <?php require APPROOT . '/views/layout/admin_footer.php'; ?>
