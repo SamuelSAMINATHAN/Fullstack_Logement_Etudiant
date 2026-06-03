@@ -115,11 +115,6 @@
                                 <i class="fas fa-file-contract"></i> CGU / Mentions
                             </a>
                         </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link text-warning" href="<?= URLROOT ?>/" target="_blank">
-                                <i class="fas fa-external-link-alt"></i> Voir le site
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </nav>

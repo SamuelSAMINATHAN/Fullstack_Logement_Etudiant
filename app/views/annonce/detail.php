@@ -50,21 +50,59 @@
 
                 <div class="row g-3 mb-4">
                     <div class="col-6 col-md-3">
-                        <div class="p-3 bg-light rounded text-center">
+                        <div class="p-3 bg-light rounded text-center h-100">
                             <i class="fas fa-couch mb-2 text-primary"></i>
-                            <div class="small"><?= $annonce['meuble'] ? 'Meublé' : 'Non meublé' ?></div>
+                            <div class="small fw-bold">Mobilier</div>
+                            <div class="small text-muted"><?= $annonce['meuble'] ? 'Meublé' : 'Non meublé' ?></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="p-3 bg-light rounded text-center">
+                        <div class="p-3 bg-light rounded text-center h-100">
                             <i class="fas fa-users mb-2 text-primary"></i>
-                            <div class="small"><?= $annonce['estColocation'] ? 'Colocation OK' : 'Pas de colocation' ?></div>
+                            <div class="small fw-bold">Colocation</div>
+                            <div class="small text-muted"><?= $annonce['estColocation'] ? 'Acceptée' : 'Non acceptée' ?></div>
                         </div>
                     </div>
                     <div class="col-6 col-md-3">
-                        <div class="p-3 bg-light rounded text-center">
+                        <div class="p-3 bg-light rounded text-center h-100">
                             <i class="fas fa-home mb-2 text-primary"></i>
-                            <div class="small"><?= Security::escape($annonce['type_logement']) ?></div>
+                            <div class="small fw-bold">Type</div>
+                            <div class="small text-muted"><?= Security::escape($annonce['type_logement']) ?></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center h-100">
+                            <i class="fas fa-building mb-2 text-primary"></i>
+                            <div class="small fw-bold">Ascenseur</div>
+                            <div class="small text-muted"><?= $annonce['ascenseur'] ? 'Oui' : 'Non' ?></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center h-100">
+                            <i class="fas fa-car mb-2 text-primary"></i>
+                            <div class="small fw-bold">Parking</div>
+                            <div class="small text-muted"><?= $annonce['parking'] ? 'Oui' : 'Non' ?></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center h-100">
+                            <i class="fas fa-sun mb-2 text-primary"></i>
+                            <div class="small fw-bold">Balcon</div>
+                            <div class="small text-muted"><?= $annonce['balcon_terrasse'] ? 'Oui' : 'Non' ?></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center h-100">
+                            <i class="fas fa-paw mb-2 text-primary"></i>
+                            <div class="small fw-bold">Animaux</div>
+                            <div class="small text-muted"><?= $annonce['animaux_acceptes'] ? 'Acceptés' : 'Non' ?></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded text-center h-100">
+                            <i class="fas fa-wheelchair mb-2 text-primary"></i>
+                            <div class="small fw-bold">Accès PMR</div>
+                            <div class="small text-muted"><?= $annonce['pmr'] ? 'Oui' : 'Non' ?></div>
                         </div>
                     </div>
                 </div>

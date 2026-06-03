@@ -192,6 +192,26 @@ class AnnonceModel extends Model
             $sql .= " AND a.meuble = 1";
         }
 
+        if (isset($filters['ascenseur']) || !empty($filters['ascenseur'])) {
+            $sql .= " AND a.ascenseur = 1";
+        }
+
+        if (isset($filters['parking']) || !empty($filters['parking'])) {
+            $sql .= " AND a.parking = 1";
+        }
+
+        if (isset($filters['balcon_terrasse']) || !empty($filters['balcon_terrasse']) || !empty($filters['balcony'])) {
+            $sql .= " AND a.balcon_terrasse = 1";
+        }
+
+        if (isset($filters['animaux_acceptes']) || !empty($filters['animaux_acceptes']) || !empty($filters['animaux'])) {
+            $sql .= " AND a.animaux_acceptes = 1";
+        }
+
+        if (isset($filters['pmr']) || !empty($filters['pmr'])) {
+            $sql .= " AND a.pmr = 1";
+        }
+
         // Filtre par colocation (compatibilité ancienne version)
         if (isset($filters['estColocation'])) {
             $sql .= " AND a.estColocation = ?";
@@ -210,18 +230,70 @@ class AnnonceModel extends Model
      */
     public function createAnnouncement($data)
     {
-        return $this->create('annonce', $data);
+        $sql = "INSERT INTO annonce (titre, description, prix, localisation, type_logement, surface, nbPieces, meuble, estColocation, ascenseur, parking, balcon_terrasse, animaux_acceptes, pmr, dateDisponibilite, idBailleur) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        return $this->insert($sql, [
+            $data['titre'],
+            $data['description'],
+            $data['prix'],
+            $data['localisation'],
+            $data['type_logement'],
+            $data['surface'],
+            $data['nbPieces'],
+            $data['meuble'],
+            $data['estColocation'],
+            $data['ascenseur'],
+            $data['parking'],
+            $data['balcon_terrasse'],
+            $data['animaux_acceptes'],
+            $data['pmr'],
+            $data['dateDisponibilite'],
+            $data['idBailleur']
+        ]);
     }
 
     /**
-     * Met à jour une annonce
-     * @param int $idAnnonce
-     * @param array $data
-     * @return bool
+     * Mettre à jour une annonce
      */
-    public function updateAnnouncement($idAnnonce, $data)
+    public function updateAnnouncement($id, $data)
     {
-        return $this->updateById('annonce', 'idAnnonce', $idAnnonce, $data);
+        $sql = "UPDATE annonce SET 
+                titre = ?, 
+                description = ?, 
+                prix = ?, 
+                localisation = ?, 
+                type_logement = ?, 
+                surface = ?, 
+                nbPieces = ?, 
+                meuble = ?, 
+                estColocation = ?, 
+                ascenseur = ?, 
+                parking = ?, 
+                balcon_terrasse = ?, 
+                animaux_acceptes = ?, 
+                pmr = ?, 
+                dateDisponibilite = ?
+                WHERE idAnnonce = ?";
+        
+        return $this->update($sql, [
+            $data['titre'],
+            $data['description'],
+            $data['prix'],
+            $data['localisation'],
+            $data['type_logement'],
+            $data['surface'],
+            $data['nbPieces'],
+            $data['meuble'],
+            $data['estColocation'],
+            $data['ascenseur'],
+            $data['parking'],
+            $data['balcon_terrasse'],
+            $data['animaux_acceptes'],
+            $data['pmr'],
+            $data['dateDisponibilite'],
+            $id
+        ]);
     }
 
     /**

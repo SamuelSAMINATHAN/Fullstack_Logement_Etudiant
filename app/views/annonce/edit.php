@@ -65,13 +65,40 @@
                     </div>
 
                     <div class="mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="meuble" name="meuble" <?= !empty($annonce['meuble']) ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="meuble">Logement meublé</label>
-                        </div>
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" id="estColocation" name="estColocation" <?= !empty($annonce['estColocation']) ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="estColocation">C'est une colocation</label>
+                        <label class="form-label d-block fw-bold mb-2">Équipements et options</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="meuble" name="meuble" <?= !empty($annonce['meuble']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="meuble">Logement meublé</label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="estColocation" name="estColocation" <?= !empty($annonce['estColocation']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="estColocation">C'est une colocation</label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="ascenseur" name="ascenseur" <?= !empty($annonce['ascenseur']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="ascenseur">Ascenseur</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="parking" name="parking" <?= !empty($annonce['parking']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="parking">Parking / Garage</label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="balcon_terrasse" name="balcon_terrasse" <?= !empty($annonce['balcon_terrasse']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="balcon_terrasse">Balcon / Terrasse</label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="animaux_acceptes" name="animaux_acceptes" <?= !empty($annonce['animaux_acceptes']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="animaux_acceptes">Animaux acceptés</label>
+                                </div>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="pmr" name="pmr" <?= !empty($annonce['pmr']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="pmr">Accès PMR</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

@@ -193,6 +193,12 @@ CREATE TABLE `annonce` (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+ALTER TABLE `annonce` 
+ADD COLUMN `ascenseur` TINYINT(1) DEFAULT 0 COMMENT '0 = Non, 1 = Oui',
+ADD COLUMN `parking` TINYINT(1) DEFAULT 0 COMMENT '0 = Non, 1 = Oui',
+ADD COLUMN `balcon_terrasse` TINYINT(1) DEFAULT 0 COMMENT '0 = Non, 1 = Oui',
+ADD COLUMN `animaux_acceptes` TINYINT(1) DEFAULT 0 COMMENT '0 = Non, 1 = Oui',
+ADD COLUMN `pmr` TINYINT(1) DEFAULT 0 COMMENT '0 = Logement adapté PMR';
 
 -- ============================================================
 -- 6. TABLE : photo_annonce

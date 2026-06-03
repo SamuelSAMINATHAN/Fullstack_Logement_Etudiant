@@ -129,6 +129,11 @@ class AnnonceController extends Controller
         
         // Équipements (booléens)
         if (isset($_GET['meuble'])) $filters['meuble'] = true;
+        if (isset($_GET['ascenseur'])) $filters['ascenseur'] = true;
+        if (isset($_GET['parking'])) $filters['parking'] = true;
+        if (isset($_GET['balcony'])) $filters['balcony'] = true;
+        if (isset($_GET['animaux'])) $filters['animaux'] = true;
+        if (isset($_GET['pmr'])) $filters['pmr'] = true;
 
         try {
             $annonces = $this->annonceModel->searchAnnouncements($filters);
@@ -181,6 +186,11 @@ class AnnonceController extends Controller
                 'nbPieces' => $post['nbPieces'],
                 'meuble' => isset($post['meuble']) ? 1 : 0,
                 'estColocation' => isset($post['estColocation']) ? 1 : 0,
+                'ascenseur' => isset($post['ascenseur']) ? 1 : 0,
+                'parking' => isset($post['parking']) ? 1 : 0,
+                'balcon_terrasse' => isset($post['balcon_terrasse']) ? 1 : 0,
+                'animaux_acceptes' => isset($post['animaux_acceptes']) ? 1 : 0,
+                'pmr' => isset($post['pmr']) ? 1 : 0,
                 'dateDisponibilite' => $post['dateDisponibilite'],
                 'idBailleur' => $_SESSION['user_id']
             ];
@@ -245,6 +255,11 @@ class AnnonceController extends Controller
                     'nbPieces' => $post['nbPieces'],
                     'meuble' => isset($post['meuble']) ? 1 : 0,
                     'estColocation' => isset($post['estColocation']) ? 1 : 0,
+                    'ascenseur' => isset($post['ascenseur']) ? 1 : 0,
+                    'parking' => isset($post['parking']) ? 1 : 0,
+                    'balcon_terrasse' => isset($post['balcon_terrasse']) ? 1 : 0,
+                    'animaux_acceptes' => isset($post['animaux_acceptes']) ? 1 : 0,
+                    'pmr' => isset($post['pmr']) ? 1 : 0,
                     'dateDisponibilite' => $post['dateDisponibilite']
                 ];
 
