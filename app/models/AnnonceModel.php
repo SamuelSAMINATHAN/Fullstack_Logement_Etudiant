@@ -82,10 +82,11 @@ class AnnonceModel extends Model
      */
     public function searchAnnouncements($filters = [])
     {
-        $sql = "SELECT a.*, u.nom, u.prenom, u.email 
+        $sql = "SELECT a.*, u.nom, u.prenom, u.email, b.estVerifie
                 FROM annonce a 
-                JOIN utilisateur u ON a.idUtilisateur = u.idUtilisateur 
-                WHERE a.statut = 'active'";
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                JOIN utilisateur u ON b.idUtilisateur = u.idUtilisateur 
+                WHERE b.estShadowban = 0";
         
         $params = [];
         
@@ -157,30 +158,13 @@ class AnnonceModel extends Model
             $params[] = $filters['type_logement'];
         }
         
-        // Filtres par équipements
+        // Filtres par équipements (Uniquement ceux présents dans la table annonce)
         if (isset($filters['meuble']) || !empty($filters['meuble'])) {
             $sql .= " AND a.meuble = 1";
         }
         
-        if (!empty($filters['ascenseur'])) {
-            $sql .= " AND a.ascenseur = 1";
-        }
-        
-        if (!empty($filters['parking'])) {
-            $sql .= " AND a.parking = 1";
-        }
-        
-        if (!empty($filters['balcony'])) {
-            $sql .= " AND a.balcon = 1";
-        }
-        
-        if (!empty($filters['animaux'])) {
-            $sql .= " AND a.animaux = 1";
-        }
-        
-        if (!empty($filters['pmr'])) {
-            $sql .= " AND a.pmr = 1";
-        }
+        // Note: ascenseur, parking, balcon, animaux, pmr ne sont pas dans la table annonce
+        // On les ignore pour éviter les erreurs SQL
         
         // Filtre par colocation (compatibilité ancienne version)
         if (isset($filters['estColocation'])) {
@@ -188,7 +172,7 @@ class AnnonceModel extends Model
             $params[] = $filters['estColocation'];
         }
         
-        $sql .= " ORDER BY a.date_creation DESC";
+        $sql .= " ORDER BY a.datePublication DESC";
         
         return $this->select($sql, $params);
     }

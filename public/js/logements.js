@@ -1,5 +1,5 @@
 // Configuration - Le chemin vers mon fichier API
-const API_URL = APP_CONFIG?.API_URL || 'http://localhost:8888/test/public/annonce/apisearch';   
+const API_URL = `${URLROOT}/annonce/apisearch`;   
 let allListings = [];                   // Tous les logements chargés
 let currentPage = 1;                    // Page où on se trouve (1 par défaut)
 const itemsPerPage = 6;                 // 6 annonces par page
@@ -194,7 +194,10 @@ function displayListings(listings) {
         if (listing.ascenseur) equipmentsHtml += '<span class="feature-tag"><i class="fas fa-arrow-up"></i> Ascenseur</span>';
         if (listing.animaux) equipmentsHtml += '<span class="feature-tag"><i class="fas fa-paw"></i> Animaux acceptés</span>';
         
-        const photoUrl = listing.photo || 'https://picsum.photos/id/106/400/300';
+        // CORRECTION : Utilisation de la première photo du tableau 'photos' avec la clé 'urlPhoto'
+        const photoUrl = (listing.photos && listing.photos.length > 0) 
+            ? `${URLROOT}${listing.photos[0].urlPhoto}` 
+            : 'https://picsum.photos/id/106/400/300';
         
         // Structure complète d'une carte
         return `
@@ -307,7 +310,7 @@ window.toggleHeart = function(btn) {
 
 // Voir les détails d'une annonce
 window.viewDetails = function(id) {
-    showToast(`Chargement des détails du logement #${id}`);
+    window.location.href = `${URLROOT}/annonce/detail/${id}`;
 };
 
 // Écran de chargement (skeleton)

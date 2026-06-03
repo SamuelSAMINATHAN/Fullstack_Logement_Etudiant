@@ -26,6 +26,17 @@ class InformationLegaleModel extends Model
     }
 
     /**
+     * Récupère une information légale par son titre (un seul résultat)
+     * @param string $titre
+     * @return array|null
+     */
+    public function getOneByTitle($titre)
+    {
+        $sql = "SELECT * FROM informationlegale WHERE titre = ?";
+        return $this->selectOne($sql, [$titre]);
+    }
+
+    /**
      * Récupère une information légale par son titre
      * @param string $titre 'CGU' | 'Mentions légales' | 'Politique de confidentialité'
      * @return array|null

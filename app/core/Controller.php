@@ -96,7 +96,7 @@ class Controller
     protected function requireAdmin(): void
     {
         if (!$this->isAdminLoggedIn()) {
-            $this->redirect('/admin/login');
+            $this->redirect('/adminauth/login');
         }
     }
 

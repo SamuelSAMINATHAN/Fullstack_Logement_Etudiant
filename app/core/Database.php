@@ -96,7 +96,7 @@ class Database
             // Binder les paramètres si ce sont des paramètres nommés
             if (!empty($params) && is_string(array_key_first($params))) {
                 foreach ($params as $key => $value) {
-                    $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+                    $paramType = is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
                     $stmt->bindValue(':' . ltrim($key, ':'), $value, $paramType);
                 }
                 $stmt->execute();

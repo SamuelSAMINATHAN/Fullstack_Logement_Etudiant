@@ -107,61 +107,21 @@ class BailleurModel extends Model
     /**
      * Shadowban un bailleur
      * @param int $idUtilisateur
+     * @param int $status 1 pour shadowban, 0 pour retirer
      * @return bool
      */
-    public function shadowbanLandlord($idUtilisateur)
+    public function toggleShadowban($idUtilisateur, $status = 1)
     {
-        return $this->updateById('bailleur', 'idUtilisateur', $idUtilisateur, ['estShadowban' => 1]);
+        return $this->updateById('bailleur', 'idUtilisateur', $idUtilisateur, ['estShadowban' => $status]);
     }
 
     /**
-     * Retire le shadowban d'un bailleur
-     * @param int $idUtilisateur
-     * @return bool
-     */
-    public function unbanLandlord($idUtilisateur)
-    {
-        return $this->updateById('bailleur', 'idUtilisateur', $idUtilisateur, ['estShadowban' => 0]);
-    }
-
-    /**
-     * Supprime un profil bailleur
+     * Supprime un bailleur
      * @param int $idUtilisateur
      * @return bool
      */
     public function deleteLandlord($idUtilisateur)
     {
         return $this->deleteById('bailleur', 'idUtilisateur', $idUtilisateur);
-    }
-
-    /**
-     * Enregistre un bailleur complet (utilisateur + bailleur)
-     * @param array $userData Données de l'utilisateur
-     * @return int|false ID de l'utilisateur en cas de succès, false sinon
-     */
-    public function registerLandlord($userData)
-    {
-        // 1. Insertion utilisateur
-        $sqlUser = "INSERT INTO utilisateur (nom, prenom, email, mdp, role, date_acceptation_cgu)
-                    VALUES (?, ?, ?, ?, ?, ?)";
-
-        $passwordHash = password_hash($userData['mdp'], PASSWORD_BCRYPT);
-
-        $this->insert($sqlUser, [
-            $userData['nom'],
-            $userData['prenom'],
-            $userData['email'],
-            $passwordHash,
-            $userData['role'],
-            $userData['date_acceptation_cgu']
-        ]);
-
-        $userId = $this->lastInsertId();
-
-        // 2. Insertion bailleur
-        $sqlBailleur = "INSERT INTO bailleur (idUtilisateur) VALUES (?)";
-        $this->insert($sqlBailleur, [$userId]);
-
-        return $userId;
     }
 }

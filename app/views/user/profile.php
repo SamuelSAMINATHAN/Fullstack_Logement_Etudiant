@@ -53,24 +53,21 @@
                     <div class="mb-3">
                         <label for="email" class="form-label">Adresse Email</label>
                         <input type="email" class="form-control bg-light" id="email" value="<?php echo isset($user['email']) ? Security::escape($user['email']) : ''; ?>" readonly>
-                        <div class="form-text">Pour modifier votre email, veuillez contacter le support.</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="telephone" class="form-label">Téléphone</label>
-                        <input type="tel" class="form-control" id="telephone" name="telephone" value="<?php echo isset($user['telephone']) ? Security::escape($user['telephone']) : ''; ?>">
+                        <div class="form-text">L'email ne peut pas être modifié.</div>
                     </div>
                     
                     <?php if ($_SESSION['user_role'] === 'etudiant'): ?>
                         <hr class="my-4">
                         <h5 class="mb-3">Informations étudiantes</h5>
-                        <div class="mb-3">
-                            <label for="ecole" class="form-label">École / Université</label>
-                            <input type="text" class="form-control" id="ecole" name="ecole" value="<?php echo isset($user['ecole']) ? Security::escape($user['ecole']) : ''; ?>">
-                        </div>
-                        <div class="mb-3">
-                            <label for="garant" class="form-label">Garant (optionnel)</label>
-                            <input type="text" class="form-control" id="garant" name="garant" value="<?php echo isset($user['garant']) ? Security::escape($user['garant']) : ''; ?>" placeholder="Ex: Parents, Visale...">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="dateNaissance" class="form-label">Date de naissance</label>
+                                <input type="date" class="form-control" id="dateNaissance" name="dateNaissance" value="<?php echo isset($etudiant['dateNaissance']) ? Security::escape($etudiant['dateNaissance']) : ''; ?>">
+                            </div>
+                            <div class="col-md-6 mt-3 mt-md-0">
+                                <label for="localisation" class="form-label">Ville recherchée</label>
+                                <input type="text" class="form-control" id="localisation" name="localisation" value="<?php echo isset($etudiant['localisation']) ? Security::escape($etudiant['localisation']) : ''; ?>" placeholder="Ex: Paris, Lyon...">
+                            </div>
                         </div>
                     <?php endif; ?>
                     
@@ -80,17 +77,7 @@
                 </form>
             </div>
         </div>
-
-        <div class="card shadow-sm" id="section-messages" style="display:none;">
-            <div class="card-header bg-white">
-                <h4 class="mb-0">Mes Messages</h4>
-            </div>
-            <div class="card-body">
-                <p class="text-muted text-center my-4">Vous n'avez pas encore de conversations.</p>
-            </div>
-        </div>
     </div>
 </div>
 
-<script src="<?php echo URLROOT; ?>/public/js/dashboard.js"></script>
 <?php require APPROOT . '/views/layout/footer.php'; ?>

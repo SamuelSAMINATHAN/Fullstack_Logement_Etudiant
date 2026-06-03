@@ -7,12 +7,31 @@ use App\Core\Model;
 class SignalementModel extends Model
 {
     /**
-     * Récupère tous les signalements
+     * Récupère tous les signalements avec détails (étudiant, annonce, bailleur)
+     * @param string|null $filterStatut Filtrer par statut ('En attente', 'Traité', 'Rejeté')
      * @return array
      */
-    public function getAllReports()
+    public function getAllReportsWithDetails($filterStatut = null)
     {
-        return $this->findAll('signalement');
+        $sql = "SELECT s.*, 
+                       u.nom as student_nom, u.prenom as student_prenom,
+                       a.titre as annonce_titre, a.idAnnonce,
+                       ub.nom as bailleur_nom, ub.idUtilisateur as idBailleur
+                FROM signalement s
+                JOIN utilisateur u ON s.idEtudiant = u.idUtilisateur
+                JOIN annonce a ON s.idAnnonce = a.idAnnonce
+                JOIN bailleur b ON a.idBailleur = b.idUtilisateur
+                JOIN utilisateur ub ON b.idUtilisateur = ub.idUtilisateur";
+        
+        $params = [];
+        if ($filterStatut) {
+            $sql .= " WHERE s.statut = ?";
+            $params[] = $filterStatut;
+        }
+        
+        $sql .= " ORDER BY s.dateSignalement DESC";
+        
+        return $this->select($sql, $params);
     }
 
     /**
@@ -118,37 +137,14 @@ class SignalementModel extends Model
     }
 
     /**
-     * Récupère les signalements en attente avec les détails
-     * @return array
-     */
-    public function getPendingReportsWithDetails()
-    {
-        $db = $this;
-        $query = "
-            SELECT s.*, 
-                   u.nom, u.prenom, u.email,
-                   a.titre as titre_annonce, a.idBailleur
-            FROM signalement s
-            JOIN etudiant e ON s.idEtudiant = e.idUtilisateur
-            JOIN utilisateur u ON e.idUtilisateur = u.idUtilisateur
-            JOIN annonce a ON s.idAnnonce = a.idAnnonce
-            WHERE s.statut = 'En attente'
-            ORDER BY s.dateSignalement ASC
-        ";
-        $stmt = $db->query($query);
-        return $stmt ?? [];
-    }
-
-    /**
      * Compte les signalements en attente
      * @return int
      */
     public function countPendingReports()
     {
-        $db = $this;
-        $query = "SELECT COUNT(*) as count FROM signalement WHERE statut = 'En attente'";
-        $stmt = $db->query($query);
-        return $stmt ? ($stmt[0]['count'] ?? 0) : 0;
+        $sql = "SELECT COUNT(*) as count FROM signalement WHERE statut = 'En attente'";
+        $result = $this->selectOne($sql);
+        return (int)($result['count'] ?? 0);
     }
 
     /**
@@ -158,29 +154,8 @@ class SignalementModel extends Model
      */
     public function countReportsByAnnouncement($idAnnonce)
     {
-        $db = $this;
-        $query = "SELECT COUNT(*) as count FROM signalement WHERE idAnnonce = :idAnnonce";
-        $stmt = $db->query($query, ['idAnnonce' => $idAnnonce]);
-        return $stmt ? ($stmt[0]['count'] ?? 0) : 0;
-    }
-
-    /**
-     * Récupère les annonces les plus signalées
-     * @param int $limit
-     * @return array
-     */
-    public function getMostReportedAnnouncements($limit = 10)
-    {
-        $db = $this;
-        $query = "
-            SELECT a.idAnnonce, a.titre, a.localisation, COUNT(s.idSignalement) as report_count
-            FROM annonce a
-            LEFT JOIN signalement s ON a.idAnnonce = s.idAnnonce
-            GROUP BY a.idAnnonce
-            ORDER BY report_count DESC
-            LIMIT :limit
-        ";
-        $stmt = $db->query($query, ['limit' => $limit]);
-        return $stmt ?? [];
+        $sql = "SELECT COUNT(*) as count FROM signalement WHERE idAnnonce = ?";
+        $result = $this->selectOne($sql, [$idAnnonce]);
+        return (int)($result['count'] ?? 0);
     }
 }

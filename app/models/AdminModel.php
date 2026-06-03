@@ -27,6 +27,17 @@ class AdminModel extends Model
     }
 
     /**
+     * Récupère un administrateur par son login (un seul résultat)
+     * @param string $login
+     * @return array|null
+     */
+    public function getOneAdminByLogin($login)
+    {
+        $sql = "SELECT * FROM administrateur WHERE login = ?";
+        return $this->selectOne($sql, [$login]);
+    }
+
+    /**
      * Récupère un administrateur par son login
      * @param string $login
      * @return array|null

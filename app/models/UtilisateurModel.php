@@ -8,12 +8,33 @@ use App\Core\Security;
 class UtilisateurModel extends Model
 {
     /**
-     * Récupère tous les utilisateurs
+     * Récupère tous les utilisateurs avec les détails (étudiant/bailleur)
      * @return array
      */
-    public function getAllUsers()
+    public function getAllUsersWithDetails()
     {
-        return $this->findAll('utilisateur');
+        $sql = "SELECT u.*, 
+                       e.dateNaissance, e.localisation,
+                       b.estVerifie, b.estShadowban
+                FROM utilisateur u
+                LEFT JOIN etudiant e ON u.idUtilisateur = e.idUtilisateur
+                LEFT JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
+                ORDER BY u.idUtilisateur DESC";
+        return $this->select($sql);
+    }
+
+    /**
+     * Récupère les bailleurs en attente de vérification ou à vérifier
+     * @return array
+     */
+    public function getBailleursToVerify()
+    {
+        $sql = "SELECT u.*, b.estVerifie, b.estShadowban
+                FROM utilisateur u
+                JOIN bailleur b ON u.idUtilisateur = b.idUtilisateur
+                WHERE b.estVerifie = 0
+                ORDER BY u.idUtilisateur DESC";
+        return $this->select($sql);
     }
 
     /**
@@ -134,12 +155,13 @@ class UtilisateurModel extends Model
     }
 
     /**
-     * Supprime un utilisateur
+     * Supprime un utilisateur et ses données associées (etudiant/bailleur)
      * @param int $idUtilisateur
      * @return bool
      */
     public function deleteUser($idUtilisateur)
     {
+        // La suppression dans 'etudiant' ou 'bailleur' est gérée par ON DELETE CASCADE
         return $this->deleteById('utilisateur', 'idUtilisateur', $idUtilisateur);
     }
 

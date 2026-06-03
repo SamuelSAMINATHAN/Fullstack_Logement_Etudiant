@@ -3,214 +3,61 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class AvisController extends Controller
 {
     private $avisModel;
-    private $annonceModel;
-    private $candidatureModel;
 
     public function __construct()
     {
+        $this->requireRole('etudiant');
         $this->avisModel = $this->model('AvisModel');
-        $this->annonceModel = $this->model('AnnonceModel');
-        $this->candidatureModel = $this->model('CandidatureModel');
     }
 
     /**
-     * Crée un nouvel avis
+     * Traite l'ajout d'un avis
      */
-    public function create($idAnnonce = null)
+    public function add()
     {
-        $this->requireRole('etudiant');
-
-        if ($idAnnonce === null || !$this->isPost()) {
+        if (!$this->isPost()) {
             $this->redirect('/annonce');
         }
 
         $post = $this->sanitizePost();
-
-        if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
+        if (!Security::verifyCsrf($post['csrf_token'] ?? '')) {
+            Session::setFlash('error', 'Token CSRF invalide.');
+            $this->redirect('/annonce/detail/' . ($post['idAnnonce'] ?? ''));
         }
 
-        $annonce = $this->annonceModel->getAnnouncementById($idAnnonce);
-
-        if (!$annonce) {
-            $this->setFlash('error', 'Annonce introuvable.');
-            $this->redirect('/annonce');
-        }
-
-        // Vérifier que l'étudiant a une candidature acceptée pour cette annonce
-        $candidature = $this->candidatureModel->getApplicationByStudentAndAnnouncement(
-            $_SESSION['user_id'],
-            $idAnnonce
-        );
-
-        if (!$candidature || $candidature['statut'] !== 'Acceptée') {
-            $this->setFlash('error', 'Vous ne pouvez laisser un avis que si votre candidature a été acceptée.');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        }
-
-        // Vérifier si l'étudiant a déjà laissé un avis
-        if ($this->avisModel->hasReviewed($_SESSION['user_id'], $idAnnonce)) {
-            $this->setFlash('error', 'Vous avez déjà laissé un avis pour cette annonce.');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        }
-
-        $note = (int)($post['note'] ?? 0);
+        $idAnnonce = $post['idAnnonce'] ?? null;
+        $note = $post['note'] ?? null;
         $commentaire = $post['commentaire'] ?? '';
 
-        if ($note < 1 || $note > 5) {
-            $this->setFlash('error', 'La note doit être entre 1 et 5.');
+        if (!$idAnnonce || !$note) {
+            Session::setFlash('error', 'La note est obligatoire.');
             $this->redirect('/annonce/detail/' . $idAnnonce);
         }
 
+        $data = [
+            'idEtudiant' => $_SESSION['user_id'],
+            'idAnnonce' => $idAnnonce,
+            'note' => $note,
+            'commentaire' => $commentaire,
+            'dateAvis' => date('Y-m-d H:i:s')
+        ];
+
         try {
-            $data = [
-                'idEtudiant' => $_SESSION['user_id'],
-                'idAnnonce' => $idAnnonce,
-                'note' => $note,
-                'commentaire' => $commentaire ?: null
-            ];
-
-            $idAvis = $this->avisModel->createReview($data);
-
-            if (!$idAvis) {
-                $this->setFlash('error', 'Erreur lors de la création de l\'avis.');
-                $this->redirect('/annonce/detail/' . $idAnnonce);
+            if ($this->avisModel->createReview($data)) {
+                Session::setFlash('success', 'Votre avis a été publié.');
+            } else {
+                Session::setFlash('error', 'Erreur lors de la publication de l\'avis.');
             }
-
-            $this->setFlash('success', 'Avis posté avec succès !');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
         } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la création de l\'avis : ' . $e->getMessage());
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        }
-    }
-
-    /**
-     * Affiche mes avis (pour étudiant)
-     */
-    public function myReviews()
-    {
-        $this->requireRole('etudiant');
-
-        $avis = $this->avisModel->getReviewsByStudent($_SESSION['user_id']);
-
-        // Récupérer les détails des annonces
-        foreach ($avis as &$av) {
-            $av['annonce'] = $this->annonceModel->getAnnouncementById($av['idAnnonce']);
+            Session::setFlash('error', 'Vous avez déjà laissé un avis pour cette annonce.');
         }
 
-        $data = [
-            'avis' => $avis
-        ];
-
-        $this->view('user/avis', $data);
-    }
-
-    /**
-     * Édite un avis
-     */
-    public function edit($idAvis = null)
-    {
-        $this->requireRole('etudiant');
-
-        if ($idAvis === null) {
-            $this->redirect('/');
-        }
-
-        $avis = $this->avisModel->getReviewById($idAvis);
-
-        if (!$avis || $avis['idEtudiant'] != $_SESSION['user_id']) {
-            $this->setFlash('error', 'Avis introuvable ou accès non autorisé.');
-            $this->redirect('/');
-        }
-
-        $data = [
-            'avis' => $avis,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('user/avis_edit', $data);
-    }
-
-    /**
-     * Traite la modification d'un avis
-     */
-    public function editHandler($idAvis = null)
-    {
-        $this->requireRole('etudiant');
-
-        if ($idAvis === null || !$this->isPost()) {
-            $this->redirect('/');
-        }
-
-        $post = $this->sanitizePost();
-
-        if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/');
-        }
-
-        $avis = $this->avisModel->getReviewById($idAvis);
-
-        if (!$avis || $avis['idEtudiant'] != $_SESSION['user_id']) {
-            $this->setFlash('error', 'Avis introuvable ou accès non autorisé.');
-            $this->redirect('/');
-        }
-
-        $note = (int)($post['note'] ?? 0);
-        $commentaire = $post['commentaire'] ?? '';
-
-        if ($note < 1 || $note > 5) {
-            $this->setFlash('error', 'La note doit être entre 1 et 5.');
-            $this->redirect('/avis/edit/' . $idAvis);
-        }
-
-        try {
-            $data = [
-                'note' => $note,
-                'commentaire' => $commentaire ?: null
-            ];
-
-            $this->avisModel->updateReview($idAvis, $data);
-
-            $this->setFlash('success', 'Avis mis à jour avec succès !');
-            $this->redirect('/avis/myReviews');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
-            $this->redirect('/avis/edit/' . $idAvis);
-        }
-    }
-
-    /**
-     * Supprime un avis
-     */
-    public function delete($idAvis = null)
-    {
-        $this->requireRole('etudiant');
-
-        if ($idAvis === null) {
-            $this->redirect('/');
-        }
-
-        $avis = $this->avisModel->getReviewById($idAvis);
-
-        if (!$avis || $avis['idEtudiant'] != $_SESSION['user_id']) {
-            $this->setFlash('error', 'Avis introuvable ou accès non autorisé.');
-            $this->redirect('/');
-        }
-
-        try {
-            $this->avisModel->deleteReview($idAvis);
-            $this->setFlash('success', 'Avis supprimé avec succès !');
-            $this->redirect('/avis/myReviews');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la suppression.');
-            $this->redirect('/');
-        }
+        $this->redirect('/annonce/detail/' . $idAnnonce);
     }
 }

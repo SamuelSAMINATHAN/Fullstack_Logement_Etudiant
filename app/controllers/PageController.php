@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class PageController extends Controller
 {
@@ -114,19 +116,13 @@ class PageController extends Controller
         $sujet = $post['sujet'] ?? '';
         $message = $post['message'] ?? '';
 
-        // Valider les données
         if (empty($nom) || empty($email) || empty($sujet) || empty($message)) {
             $this->setFlash('error', 'Tous les champs sont obligatoires.');
             $this->redirect('/page/contact');
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->setFlash('error', 'Email invalide.');
-            $this->redirect('/page/contact');
-        }
-
-        if (strlen($message) > 5000) {
-            $this->setFlash('error', 'Le message est trop long (max 5000 caractères).');
+            $this->setFlash('error', 'L\'email n\'est pas valide.');
             $this->redirect('/page/contact');
         }
 
@@ -136,23 +132,17 @@ class PageController extends Controller
                 'email' => $email,
                 'sujet' => $sujet,
                 'message' => $message,
-                'traite' => 0
+                'dateEnvoi' => date('Y-m-d H:i:s')
             ];
 
-            $idContact = $this->contactModel->createMessage($data);
-
-            if (!$idContact) {
-                $this->setFlash('error', 'Erreur lors de l\'envoi du message.');
-                $this->redirect('/page/contact');
+            if ($this->contactModel->createMessage($data)) {
+                $this->setFlash('success', 'Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais.');
+            } else {
+                $this->setFlash('error', 'Une erreur est survenue lors de l\'envoi du message.');
             }
-
-            // TODO: Envoyer un email de confirmation
-            // sendEmail($email, 'Nous avons reçu votre message', ...);
-
-            $this->setFlash('success', 'Votre message a été envoyé. Nous vous répondrons rapidement !');
-            $this->redirect('/');
+            $this->redirect('/page/contact');
         } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de l\'envoi : ' . $e->getMessage());
+            $this->setFlash('error', 'Erreur : ' . $e->getMessage());
             $this->redirect('/page/contact');
         }
     }

@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class AnnonceController extends Controller
 {
@@ -24,335 +26,253 @@ class AnnonceController extends Controller
     }
 
     /**
-     * Liste toutes les annonces
+     * Liste toutes les annonces (recherche)
      */
     public function home()
     {
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $filters = [];
-
-        // Récupérer les filtres GET
-        if (!empty($_GET['localisation'])) {
-            $filters['localisation'] = $_GET['localisation'];
-        }
-        if (!empty($_GET['prix_max'])) {
-            $filters['prix_max'] = (float)$_GET['prix_max'];
-        }
-        if (!empty($_GET['type_logement'])) {
-            $filters['type_logement'] = $_GET['type_logement'];
-        }
+        if (!empty($_GET['localisation'])) $filters['localisation'] = $_GET['localisation'];
+        if (!empty($_GET['prix_max'])) $filters['prix_max'] = (float)$_GET['prix_max'];
+        if (!empty($_GET['type_logement'])) $filters['type_logement'] = $_GET['type_logement'];
 
         $annonces = $this->annonceModel->searchAnnouncements($filters);
 
-        // Ajouter les photos et les avis
         foreach ($annonces as &$annonce) {
-            $id = $annonce['id'] ?? $annonce['idAnnonce'];
+            $id = $annonce['idAnnonce'];
             $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
             $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($id);
-            $annonce['nb_avis'] = $this->avisModel->countReviewsByAnnouncement($id);
         }
 
-        $data = [
-            'annonces' => $annonces,
-            'filters' => $filters,
-            'page' => $page
-        ];
-
-        $this->view('annonce/liste', $data);
+        $this->view('annonce/liste', ['annonces' => $annonces, 'filters' => $filters]);
     }
 
     /**
-     * Affiche une annonce en détail
+     * Détails d'une annonce
      */
-    public function detail($idAnnonce = null)
+    public function detail($id = null)
     {
-        if ($idAnnonce === null) {
-            $this->redirect('/annonce');
-        }
+        if (!$id) $this->redirect('/annonce');
 
-        $annonce = $this->annonceModel->getAnnouncementWithLandlord($idAnnonce);
-
+        $annonce = $this->annonceModel->getAnnouncementWithLandlord($id);
         if (!$annonce) {
-            $this->setFlash('error', 'Annonce introuvable.');
+            Session::setFlash('error', 'Annonce introuvable.');
             $this->redirect('/annonce');
         }
 
-        // Récupérer les photos
-        $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($idAnnonce);
+        // Si le bailleur est shadowbanni, on ne montre l'annonce qu'à lui-même ou à un admin
+        if ($annonce['estShadowban'] == 1) {
+            $isOwner = $this->isLoggedIn() && $_SESSION['user_id'] == $annonce['idBailleur'];
+            $isAdmin = isset($_SESSION['admin_id']);
+            
+            if (!$isOwner && !$isAdmin) {
+                Session::setFlash('error', 'Cette annonce n\'est plus disponible.');
+                $this->redirect('/annonce');
+            }
+        }
 
-        // Récupérer les avis
-        $avis = $this->avisModel->getReviewsWithStudents($idAnnonce);
-        $annonce['avis'] = $avis;
-        $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($idAnnonce);
-
-        // Vérifier si l'utilisateur a mis en favori
+        $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
+        $annonce['avis'] = $this->avisModel->getReviewsWithStudents($id);
+        $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($id);
+        
         $annonce['est_favori'] = false;
-        if ($this->isLoggedIn() && isset($_SESSION['user_id'])) {
-            $annonce['est_favori'] = $this->favorisModel->isFavorite($_SESSION['user_id'], $idAnnonce);
+        if ($this->isLoggedIn() && $_SESSION['user_role'] === 'etudiant') {
+            $annonce['est_favori'] = $this->favorisModel->isFavorite($_SESSION['user_id'], $id);
         }
 
-        // Vérifier si l'utilisateur a postulé
-        $annonce['a_postule'] = false;
-        $candidature = null;
-        if ($this->isLoggedIn() && isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'etudiant') {
-            $candidature = $this->candidatureModel->getApplicationByStudentAndAnnouncement($_SESSION['user_id'], $idAnnonce);
-            $annonce['a_postule'] = $candidature !== null;
-            $annonce['candidature'] = $candidature;
-        }
-
-        $data = [
-            'annonce' => $annonce,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('annonce/detail', $data);
+        $this->view('annonce/detail', ['annonce' => $annonce]);
     }
 
     /**
-     * Affiche le formulaire de création d'annonce
+     * Mes annonces (Bailleur uniquement)
+     */
+    public function mesAnnonces()
+    {
+        $this->requireRole('bailleur');
+        $annonces = $this->annonceModel->getAnnouncementsByLandlord($_SESSION['user_id']);
+        $this->view('user/my_announcements', ['annonces' => $annonces]);
+    }
+
+    /**
+     * API pour la recherche d'annonces (utilisé par logements.js)
+     */
+    public function apisearch()
+    {
+        header('Content-Type: application/json');
+        
+        $filters = [];
+        if (!empty($_GET['search'])) $filters['search'] = $_GET['search'];
+        if (!empty($_GET['price_max'])) $filters['price_max'] = (float)$_GET['price_max'];
+        if (!empty($_GET['surface_min'])) $filters['surface_min'] = (float)$_GET['surface_min'];
+        
+        // Types de logement
+        if (!empty($_GET['types'])) {
+            $filters['types'] = $_GET['types']; // On laisse en string pour le modèle
+        }
+        
+        if (!empty($_GET['rooms']) && $_GET['rooms'] !== '0') {
+            $filters['rooms'] = (int)$_GET['rooms'];
+        }
+        
+        // Équipements (booléens)
+        if (isset($_GET['meuble'])) $filters['meuble'] = true;
+        if (isset($_GET['ascenseur'])) $filters['ascenseur'] = true;
+        if (isset($_GET['parking'])) $filters['parking'] = true;
+        if (isset($_GET['balcony'])) $filters['balcony'] = true;
+        if (isset($_GET['animaux'])) $filters['animaux'] = true;
+        if (isset($_GET['pmr'])) $filters['pmr'] = true;
+
+        try {
+            $annonces = $this->annonceModel->searchAnnouncements($filters);
+            
+            foreach ($annonces as &$annonce) {
+                $id = $annonce['idAnnonce'];
+                $annonce['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
+                $annonce['note_moyenne'] = $this->avisModel->getAverageRatingByAnnouncement($id);
+            }
+            
+            echo json_encode(['success' => true, 'data' => $annonces]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Créer une annonce avec gestion d'upload de photo
      */
     public function create()
     {
         $this->requireRole('bailleur');
-
-        $data = [
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('annonce/edit', $data);
-    }
-
-    /**
-     * Traite la création d'une nouvelle annonce
-     */
-    public function createHandler()
-    {
-        $this->requireRole('bailleur');
-
-        if (!$this->isPost()) {
-            $this->redirect('/annonce/create');
-        }
-
-        $post = $this->sanitizePost();
-
-        if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/annonce/create');
-        }
-
-        // Récupérer les données
-        $titre = $post['titre'] ?? '';
-        $description = $post['description'] ?? '';
-        $prix = $post['prix'] ?? '';
-        $localisation = $post['localisation'] ?? '';
-        $type_logement = $post['type_logement'] ?? '';
-        $surface = $post['surface'] ?? '';
-        $nbPieces = $post['nbPieces'] ?? 1;
-        $meuble = isset($post['meuble']) ? 1 : 0;
-        $estColocation = isset($post['estColocation']) ? 1 : 0;
-        $dateDisponibilite = $post['dateDisponibilite'] ?? null;
-
-        // Valider les données
-        if (empty($titre) || empty($description) || empty($prix) || empty($localisation)) {
-            $this->setFlash('error', 'Tous les champs obligatoires doivent être remplis.');
-            $this->redirect('/annonce/create');
-        }
-
-        try {
-            $data = [
-                'titre' => $titre,
-                'description' => $description,
-                'prix' => (float)$prix,
-                'localisation' => $localisation,
-                'type_logement' => $type_logement,
-                'surface' => (int)$surface ?: null,
-                'nbPieces' => (int)$nbPieces,
-                'meuble' => $meuble,
-                'estColocation' => $estColocation,
-                'dateDisponibilite' => $dateDisponibilite ?: null,
-                'idBailleur' => $_SESSION['user_id']
-            ];
-
-            $idAnnonce = $this->annonceModel->createAnnouncement($data);
-
-            if (!$idAnnonce) {
-                $this->setFlash('error', 'Erreur lors de la création de l\'annonce.');
+        
+        if ($this->isPost()) {
+            $post = $this->sanitizePost();
+            if (!Security::verifyCsrf($post['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Token CSRF invalide.');
                 $this->redirect('/annonce/create');
             }
 
-            $this->setFlash('success', 'Annonce créée avec succès !');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la création : ' . $e->getMessage());
-            $this->redirect('/annonce/create');
-        }
-    }
-
-    /**
-     * Affiche le formulaire de modification d'annonce
-     */
-    public function edit($idAnnonce = null)
-    {
-        $this->requireRole('bailleur');
-
-        if ($idAnnonce === null) {
-            $this->redirect('/annonce');
-        }
-
-        $annonce = $this->annonceModel->getAnnouncementById($idAnnonce);
-
-        if (!$annonce || $annonce['idBailleur'] != $_SESSION['user_id']) {
-            $this->setFlash('error', 'Annonce introuvable ou accès non autorisé.');
-            $this->redirect('/annonce');
-        }
-
-        $data = [
-            'annonce' => $annonce,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('annonce/edit', $data);
-    }
-
-    /**
-     * Traite la modification d'une annonce
-     */
-    public function editHandler($idAnnonce = null)
-    {
-        $this->requireRole('bailleur');
-
-        if (!$this->isPost()) {
-            $this->redirect('/annonce');
-        }
-
-        if ($idAnnonce === null) {
-            $this->redirect('/annonce');
-        }
-
-        $annonce = $this->annonceModel->getAnnouncementById($idAnnonce);
-
-        if (!$annonce || $annonce['idBailleur'] != $_SESSION['user_id']) {
-            $this->setFlash('error', 'Annonce introuvable ou accès non autorisé.');
-            $this->redirect('/annonce');
-        }
-
-        $post = $this->sanitizePost();
-
-        if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/annonce/edit/' . $idAnnonce);
-        }
-
-        $titre = $post['titre'] ?? '';
-        $description = $post['description'] ?? '';
-        $prix = $post['prix'] ?? '';
-        $localisation = $post['localisation'] ?? '';
-        $meuble = isset($post['meuble']) ? 1 : 0;
-        $estColocation = isset($post['estColocation']) ? 1 : 0;
-
-        if (empty($titre) || empty($description) || empty($prix)) {
-            $this->setFlash('error', 'Tous les champs obligatoires doivent être remplis.');
-            $this->redirect('/annonce/edit/' . $idAnnonce);
-        }
-
-        try {
             $data = [
-                'titre' => $titre,
-                'description' => $description,
-                'prix' => (float)$prix,
-                'localisation' => $localisation,
-                'meuble' => $meuble,
-                'estColocation' => $estColocation
+                'titre' => $post['titre'],
+                'description' => $post['description'],
+                'prix' => $post['prix'],
+                'localisation' => $post['localisation'],
+                'type_logement' => $post['type_logement'],
+                'surface' => $post['surface'],
+                'nbPieces' => $post['nbPieces'],
+                'meuble' => isset($post['meuble']) ? 1 : 0,
+                'estColocation' => isset($post['estColocation']) ? 1 : 0,
+                'dateDisponibilite' => $post['dateDisponibilite'],
+                'idBailleur' => $_SESSION['user_id']
             ];
 
-            $this->annonceModel->updateAnnouncement($idAnnonce, $data);
+            // 1. Création de l'annonce textuelle
+            $idAnnonce = $this->annonceModel->createAnnouncement($data);
+            
+            if ($idAnnonce) {
+                // 2. Gestion de l'upload de la photo
+                if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+                    $targetDir = dirname(dirname(__DIR__)) . "/public/uploads/annonces/";
+                    if (!is_dir($targetDir)) {
+                        mkdir($targetDir, 0755, true);
+                    }
+                    
+                    $fileName = time() . '_' . basename($_FILES['photo']['name']);
+                    $targetFilePath = $targetDir . $fileName;
+                    
+                    if (move_uploaded_file($_FILES['photo']['tmp_name'], $targetFilePath)) {
+                        $urlPhoto = "/uploads/annonces/" . $fileName;
+                        
+                        $this->photoAnnonceModel->createPhoto([
+                            'urlPhoto' => $urlPhoto,
+                            'idAnnonce' => $idAnnonce
+                        ]);
+                    }
+                }
 
-            $this->setFlash('success', 'Annonce mise à jour avec succès !');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
-            $this->redirect('/annonce/edit/' . $idAnnonce);
+                Session::setFlash('success', 'Annonce créée avec succès.');
+                $this->redirect('/annonce/detail/' . $idAnnonce);
+            }
         }
+
+        $this->view('annonce/edit', ['annonce' => []]); 
     }
 
     /**
-     * Supprime une annonce
+     * Modifier une annonce
      */
-    public function delete($idAnnonce = null)
+    public function edit($id = null)
     {
         $this->requireRole('bailleur');
+        if (!$id) $this->redirect('/annonce/mesAnnonces');
 
-        if ($idAnnonce === null) {
-            $this->redirect('/annonce');
-        }
-
-        $annonce = $this->annonceModel->getAnnouncementById($idAnnonce);
-
+        $annonce = $this->annonceModel->getAnnouncementById($id);
         if (!$annonce || $annonce['idBailleur'] != $_SESSION['user_id']) {
-            $this->setFlash('error', 'Annonce introuvable ou accès non autorisé.');
-            $this->redirect('/annonce');
+            $this->redirect('/annonce/mesAnnonces');
         }
 
-        try {
-            $this->annonceModel->deleteAnnouncement($idAnnonce);
-            $this->setFlash('success', 'Annonce supprimée avec succès !');
-            $this->redirect('/annonce');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la suppression.');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        }
-    }
+        if ($this->isPost()) {
+            $post = $this->sanitizePost();
+            if (!Security::verifyCsrf($post['csrf_token'] ?? '')) {
+                Session::setFlash('error', 'Token CSRF invalide.');
+            } else {
+                $data = [
+                    'titre' => $post['titre'],
+                    'description' => $post['description'],
+                    'prix' => $post['prix'],
+                    'localisation' => $post['localisation'],
+                    'type_logement' => $post['type_logement'],
+                    'surface' => $post['surface'],
+                    'nbPieces' => $post['nbPieces'],
+                    'meuble' => isset($post['meuble']) ? 1 : 0,
+                    'estColocation' => isset($post['estColocation']) ? 1 : 0,
+                    'dateDisponibilite' => $post['dateDisponibilite']
+                ];
 
-   /**
-     * Endpoint API pour la recherche asynchrone (AJAX)
-     * URL ciblée : http://localhost:8888/test/public/annonce/apisearch
-     */
-    public function apisearch()
-    {
-        // Supprime tout affichage parasite précédent (au cas où)
-        if (ob_get_length()) ob_clean();
+                if ($this->annonceModel->updateAnnouncement($id, $data)) {
+                    // Gestion de l'upload de la photo lors de la modification
+                    if (!empty($_FILES['photo']['name']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+                        $targetDir = dirname(dirname(__DIR__)) . "/public/uploads/annonces/";
+                        if (!is_dir($targetDir)) {
+                            mkdir($targetDir, 0755, true);
+                        }
+                        
+                        $fileName = time() . '_' . basename($_FILES['photo']['name']);
+                        $targetFilePath = $targetDir . $fileName;
+                        
+                        if (move_uploaded_file($_FILES['photo']['tmp_name'], $targetFilePath)) {
+                            $urlPhoto = "/uploads/annonces/" . $fileName;
+                            
+                            // On ajoute la nouvelle photo
+                            $this->photoAnnonceModel->createPhoto([
+                                'urlPhoto' => $urlPhoto,
+                                'idAnnonce' => $id
+                            ]);
+                        }
+                    }
 
-        // Force l'entête JSON
-        header('Content-Type: application/json; charset=utf-8');
-
-        try {
-            // Ton routeur ne remplit pas $_GET['url'] pour les filtres, 
-            // mais les filtres classiques restent accessibles dans $_GET.
-            $filters = $_GET;
-
-            // On appelle TA méthode de recherche dans ton modèle
-            $annonces = $this->annonceModel->searchAnnouncements($filters);
-
-            // On ajoute la photo principale attendue par le JS de ton pote
-            foreach ($annonces as &$annonce) {
-                // Gestion de la clé selon ta structure de table (id ou idAnnonce)
-                $id = $annonce['idAnnonce'] ?? $annonce['id'] ?? null;
-                
-                if ($id) {
-                    $photos = $this->photoAnnonceModel->getPhotosByAnnouncement($id);
-                    // Si une photo existe, on prend son chemin, sinon l'image par défaut de Picsum
-                    $annonce['photo'] = (!empty($photos)) ? $photos[0]['chemin_photo'] : 'https://picsum.photos/id/106/400/300';
-                } else {
-                    $annonce['photo'] = 'https://picsum.photos/id/106/400/300';
+                    Session::setFlash('success', 'Annonce mise à jour.');
+                    $this->redirect('/annonce/detail/' . $id);
                 }
             }
-
-            // On renvoie exactement le format que son main.js attend
-            echo json_encode([
-                'success' => true,
-                'data'    => $annonces,
-                'count'   => count($annonces)
-            ]);
-
-        } catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'error'   => 'Erreur MVC : ' . $e->getMessage()
-            ]);
         }
-        
-        // On stoppe l'exécution pour que le routeur ne tente pas d'afficher autre chose
-        exit;
+
+        $this->view('annonce/edit', ['annonce' => $annonce]);
+    }
+
+    /**
+     * Supprimer une annonce
+     */
+    public function delete($id = null)
+    {
+        $this->requireRole('bailleur');
+        if (!$id) $this->redirect('/annonce/mesAnnonces');
+
+        $annonce = $this->annonceModel->getAnnouncementById($id);
+        if ($annonce && $annonce['idBailleur'] == $_SESSION['user_id']) {
+            $this->annonceModel->deleteAnnouncement($id);
+            Session::setFlash('success', 'Annonce supprimée.');
+        }
+
+        $this->redirect('/annonce/mesAnnonces');
     }
 }

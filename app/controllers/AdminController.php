@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class AdminController extends Controller
 {
@@ -11,6 +13,7 @@ class AdminController extends Controller
     private $bailleurModel;
     private $annonceModel;
     private $signalementModel;
+    private $infoModel;
 
     public function __construct()
     {
@@ -19,6 +22,15 @@ class AdminController extends Controller
         $this->bailleurModel = $this->model('BailleurModel');
         $this->annonceModel = $this->model('AnnonceModel');
         $this->signalementModel = $this->model('SignalementModel');
+        $this->infoModel = $this->model('InformationLegaleModel');
+    }
+
+    /**
+     * Affiche la page d'accueil du backoffice admin
+     */
+    public function home()
+    {
+        $this->redirect('/admin/dashboard');
     }
 
     /**
@@ -28,189 +40,139 @@ class AdminController extends Controller
     {
         $this->requireAdmin();
 
-        // Statistiques
-        $totalUsers = count($this->utilisateurModel->getAllUsers());
-        $totalAnnonces = count($this->annonceModel->getAllAnnouncements());
-        $pendingReports = $this->signalementModel->countPendingReports();
-
         $data = [
-            'total_users' => $totalUsers,
-            'total_annonces' => $totalAnnonces,
-            'pending_reports' => $pendingReports
+            'stats' => [
+                'users_count' => count($this->utilisateurModel->getAllUsersWithDetails()),
+                'annonces_count' => count($this->annonceModel->getAllAnnouncements()),
+                'signalements_count' => $this->signalementModel->countPendingReports(),
+            ],
+            'recent_users' => $this->utilisateurModel->getAllUsersWithDetails()
         ];
 
         $this->view('admin/dashboard', $data);
     }
 
     /**
-     * Gère les utilisateurs
+     * Gestion des utilisateurs
      */
-    public function manageUsers()
+    public function users()
     {
         $this->requireAdmin();
-
-        $users = $this->utilisateurModel->getAllUsers();
-
-        $data = [
-            'users' => $users,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('admin/users_manage', $data);
+        $users = $this->utilisateurModel->getAllUsersWithDetails();
+        $this->view('admin/users/index', ['users' => $users]);
     }
 
     /**
-     * Affiche les détails d'un utilisateur
+     * Vérification des bailleurs
      */
-    public function viewUser($idUtilisateur = null)
+    public function verifyBailleurs()
     {
         $this->requireAdmin();
-
-        if ($idUtilisateur === null) {
-            $this->redirect('/admin/manageUsers');
-        }
-
-        $user = $this->utilisateurModel->getUserById($idUtilisateur);
-
-        if (!$user) {
-            $this->setFlash('error', 'Utilisateur introuvable.');
-            $this->redirect('/admin/manageUsers');
-        }
-
-        $data = [
-            'user' => $user,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('admin/user_detail', $data);
+        $bailleurs = $this->utilisateurModel->getBailleursToVerify();
+        $this->view('admin/users/verify_bailleurs', ['bailleurs' => $bailleurs]);
     }
 
     /**
-     * Supprime un utilisateur
+     * Action : Vérifier un bailleur
      */
-    public function deleteUser($idUtilisateur = null)
+    public function verify($id)
     {
         $this->requireAdmin();
-
-        if ($idUtilisateur === null || !$this->isPost()) {
-            $this->redirect('/admin/manageUsers');
+        if ($this->bailleurModel->verifyLandlord($id)) {
+            Session::setFlash('success', 'Bailleur vérifié avec succès.');
+        } else {
+            Session::setFlash('error', 'Erreur lors de la vérification.');
         }
-
-        $post = $this->sanitizePost();
-
-        if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/admin/manageUsers');
-        }
-
-        $user = $this->utilisateurModel->getUserById($idUtilisateur);
-
-        if (!$user) {
-            $this->setFlash('error', 'Utilisateur introuvable.');
-            $this->redirect('/admin/manageUsers');
-        }
-
-        try {
-            $this->utilisateurModel->deleteUser($idUtilisateur);
-            $this->setFlash('success', 'Utilisateur supprimé.');
-            $this->redirect('/admin/manageUsers');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la suppression.');
-            $this->redirect('/admin/viewUser/' . $idUtilisateur);
-        }
+        $this->redirect('/admin/users');
     }
 
     /**
-     * Vérifie un bailleur
+     * Action : Shadowban un bailleur
      */
-    public function verifyLandlord($idUtilisateur = null)
+    public function shadowban($id)
     {
         $this->requireAdmin();
-
-        if ($idUtilisateur === null) {
-            $this->redirect('/admin/manageUsers');
+        $status = isset($_GET['status']) ? (int)$_GET['status'] : 1;
+        if ($this->bailleurModel->toggleShadowban($id, $status)) {
+            $msg = $status ? 'Bailleur shadowbanni.' : 'Shadowban retiré.';
+            Session::setFlash('success', $msg);
+        } else {
+            Session::setFlash('error', 'Erreur lors de l\'opération.');
         }
-
-        try {
-            $this->bailleurModel->verifyLandlord($idUtilisateur);
-            $this->setFlash('success', 'Bailleur vérifié.');
-            $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la vérification.');
-            $this->redirect('/admin/manageUsers');
-        }
+        $this->redirect('/admin/users');
     }
 
     /**
-     * Retire la vérification d'un bailleur
+     * Action : Changer le rôle
      */
-    public function unverifyLandlord($idUtilisateur = null)
+    public function changeRole($id)
     {
         $this->requireAdmin();
-
-        if ($idUtilisateur === null) {
-            $this->redirect('/admin/manageUsers');
+        if (!$this->isPost()) {
+            $this->redirect('/admin/users');
         }
 
-        try {
-            $this->bailleurModel->unverifyLandlord($idUtilisateur);
-            $this->setFlash('success', 'Vérification retirée.');
-            $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la modification.');
-            $this->redirect('/admin/manageUsers');
+        $newRole = $_POST['role'] ?? '';
+        if (in_array($newRole, ['etudiant', 'bailleur'])) {
+            if ($this->utilisateurModel->updateUser($id, ['role' => $newRole])) {
+                Session::setFlash('success', 'Rôle mis à jour.');
+            } else {
+                Session::setFlash('error', 'Erreur lors de la mise à jour.');
+            }
         }
+        $this->redirect('/admin/users');
     }
 
     /**
-     * Shadowban un bailleur
+     * Action : Supprimer un utilisateur
      */
-    public function shadowbanLandlord($idUtilisateur = null)
+    public function deleteUser($id = null)
     {
         $this->requireAdmin();
-
-        if ($idUtilisateur === null) {
-            $this->redirect('/admin/manageUsers');
+        if ($id === null) {
+            $this->redirect('/admin/users');
         }
 
-        try {
-            $this->bailleurModel->shadowbanLandlord($idUtilisateur);
-            $this->setFlash('success', 'Bailleur shadowbanni.');
-            $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors du shadowban.');
-            $this->redirect('/admin/manageUsers');
+        if ($this->utilisateurModel->deleteUser($id)) {
+            Session::setFlash('success', 'Utilisateur supprimé.');
+        } else {
+            Session::setFlash('error', 'Erreur lors de la suppression.');
         }
+        $this->redirect('/admin/users');
     }
 
     /**
-     * Retire le shadowban d'un bailleur
+     * Gestion du contenu légal
      */
-    public function unbanLandlord($idUtilisateur = null)
+    public function legal()
     {
         $this->requireAdmin();
-
-        if ($idUtilisateur === null) {
-            $this->redirect('/admin/manageUsers');
-        }
-
-        try {
-            $this->bailleurModel->unbanLandlord($idUtilisateur);
-            $this->setFlash('success', 'Shadowban retiré.');
-            $this->redirect($_SERVER['HTTP_REFERER'] ?? '/admin/manageUsers');
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors du retrait du shadowban.');
-            $this->redirect('/admin/manageUsers');
-        }
+        $infos = $this->infoModel->getAllInformation();
+        $this->view('admin/content/legal', ['infos' => $infos]);
     }
 
     /**
-     * Gère l'apparence (contenu du site)
+     * Édition du contenu légal
      */
-    public function appearance()
+    public function editLegal($id)
     {
         $this->requireAdmin();
+        $info = $this->infoModel->getInformationById($id);
+        if (!$info) {
+            $this->redirect('/admin/legal');
+        }
 
-        $this->view('admin/appearance');
+        if ($this->isPost()) {
+            $data = [
+                'contenu' => $_POST['contenu'] ?? '',
+                'dateMiseAJour' => date('Y-m-d H:i:s')
+            ];
+
+            if ($this->infoModel->updateInformation($id, $data)) {
+                Session::setFlash('success', 'Information légale mise à jour.');
+                $this->redirect('/admin/legal');
+            }
+        }
+        $this->view('admin/content/legal_form', ['info' => $info]);
     }
 }

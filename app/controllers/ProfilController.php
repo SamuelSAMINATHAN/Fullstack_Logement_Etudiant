@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class ProfilController extends Controller
 {
@@ -18,14 +20,13 @@ class ProfilController extends Controller
     }
 
     /**
-     * Affiche le dashboard/profil
+     * Affiche le profil utilisateur
      */
-    public function dashboard()
+    public function profile()
     {
         $this->requireAuth();
 
         $user = $this->utilisateurModel->getUserById($_SESSION['user_id']);
-
         if (!$user) {
             Session::destroy();
             $this->redirect('/auth/login');
@@ -36,42 +37,42 @@ class ProfilController extends Controller
         ];
 
         if ($user['role'] === 'etudiant') {
-            $etudiant = $this->etudiantModel->getStudentById($_SESSION['user_id']);
-            $data['etudiant'] = $etudiant;
-            $this->view('user/dashboard', $data);
-        } else {
-            $bailleur = $this->bailleurModel->getLandlordById($_SESSION['user_id']);
-            $data['bailleur'] = $bailleur;
-            $this->view('user/dashboard', $data);
+            $data['etudiant'] = $this->etudiantModel->getStudentById($_SESSION['user_id']);
         }
+
+        $this->view('user/profile', $data);
     }
 
     /**
-     * Affiche la page de profil
+     * Affiche le dashboard
      */
-    public function profile()
+    public function dashboard()
     {
         $this->requireAuth();
 
         $user = $this->utilisateurModel->getUserById($_SESSION['user_id']);
-
         if (!$user) {
             Session::destroy();
             $this->redirect('/auth/login');
         }
 
         $data = [
-            'user' => $user,
-            'csrf_token' => Security::csrfToken()
+            'user' => $user
         ];
 
-        $this->view('user/profile', $data);
+        if ($user['role'] === 'etudiant') {
+            $data['etudiant'] = $this->etudiantModel->getStudentById($_SESSION['user_id']);
+        } else {
+            $data['bailleur'] = $this->bailleurModel->getLandlordById($_SESSION['user_id']);
+        }
+
+        $this->view('user/dashboard', $data);
     }
 
     /**
-     * Édite le profil utilisateur
+     * Met à jour le profil utilisateur
      */
-    public function edit()
+    public function update()
     {
         $this->requireAuth();
 
@@ -90,26 +91,26 @@ class ProfilController extends Controller
         $prenom = $post['prenom'] ?? '';
 
         if (empty($nom) || empty($prenom)) {
-            $this->setFlash('error', 'Tous les champs sont obligatoires.');
+            $this->setFlash('error', 'Le nom et le prénom sont obligatoires.');
             $this->redirect('/profil/profile');
         }
 
         try {
-            $data = [
+            $userData = [
                 'nom' => $nom,
                 'prenom' => $prenom
             ];
 
-            // Champs spécifiques à l'étudiant
-            if ($_SESSION['user_role'] === 'etudiant' && !empty($post['localisation'])) {
-                $this->etudiantModel->updateStudent($_SESSION['user_id'], [
-                    'localisation' => $post['localisation']
-                ]);
+            if ($_SESSION['user_role'] === 'etudiant') {
+                $studentData = [
+                    'dateNaissance' => !empty($post['dateNaissance']) ? $post['dateNaissance'] : null,
+                    'localisation' => !empty($post['localisation']) ? $post['localisation'] : null
+                ];
+                $this->etudiantModel->updateStudent($_SESSION['user_id'], $studentData);
             }
 
-            $this->utilisateurModel->updateUser($_SESSION['user_id'], $data);
+            $this->utilisateurModel->updateUser($_SESSION['user_id'], $userData);
 
-            // Mettre à jour la session
             $_SESSION['user_nom'] = $nom;
             $_SESSION['user_prenom'] = $prenom;
 
@@ -127,12 +128,7 @@ class ProfilController extends Controller
     public function changePassword()
     {
         $this->requireAuth();
-
-        $data = [
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('user/change_password', $data);
+        $this->view('user/change_password');
     }
 
     /**
@@ -195,12 +191,7 @@ class ProfilController extends Controller
     public function requestDeletion()
     {
         $this->requireAuth();
-
-        $data = [
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('user/request_deletion', $data);
+        $this->view('user/request_deletion');
     }
 
     /**

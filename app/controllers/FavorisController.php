@@ -3,88 +3,75 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Security;
+use App\Core\Session;
 
 class FavorisController extends Controller
 {
     private $favorisModel;
     private $annonceModel;
+    private $photoAnnonceModel;
 
     public function __construct()
     {
+        $this->requireRole('etudiant');
         $this->favorisModel = $this->model('FavorisModel');
         $this->annonceModel = $this->model('AnnonceModel');
+        $this->photoAnnonceModel = $this->model('PhotoAnnonceModel');
     }
 
     /**
-     * Affiche mes favoris
+     * Liste les favoris de l'étudiant
      */
     public function index()
     {
-        $this->requireRole('etudiant');
+        $favoris = $this->favorisModel->getFavoritesByStudent($_SESSION['user_id']);
+        
+        foreach ($favoris as &$fav) {
+            $fav['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($fav['idAnnonce']);
+        }
 
-        $favoris = $this->favorisModel->getFavoritesWithAnnouncements($_SESSION['user_id']);
-
-        $data = [
-            'favoris' => $favoris,
-            'csrf_token' => Security::csrfToken()
-        ];
-
-        $this->view('user/favorites', $data);
+        $this->view('user/favorites', ['favoris' => $favoris]);
     }
 
     /**
-     * Ajoute un favori
+     * Liste les favoris de l'étudiant
      */
-    public function add($idAnnonce = null)
+    public function home() // Tu remplaces index par home
     {
-        $this->requireRole('etudiant');
-
-        if ($idAnnonce === null || !$this->isPost()) {
-            $this->redirect('/annonce');
+        $favoris = $this->favorisModel->getFavoritesByStudent($_SESSION['user_id']);
+        
+        foreach ($favoris as &$fav) {
+            $fav['photos'] = $this->photoAnnonceModel->getPhotosByAnnouncement($fav['idAnnonce']);
         }
 
-        $post = $this->sanitizePost();
-
-        if (!isset($post['csrf_token']) || !Security::verifyCsrf($post['csrf_token'])) {
-            $this->setFlash('error', 'Token CSRF invalide.');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        }
-
-        $annonce = $this->annonceModel->getAnnouncementById($idAnnonce);
-
-        if (!$annonce) {
-            $this->setFlash('error', 'Annonce introuvable.');
-            $this->redirect('/annonce');
-        }
-
-        try {
-            $this->favorisModel->addFavorite($_SESSION['user_id'], $idAnnonce);
-            $this->setFlash('success', 'Annonce ajoutée aux favoris !');
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de l\'ajout aux favoris : ' . $e->getMessage());
-            $this->redirect('/annonce/detail/' . $idAnnonce);
-        }
+        $this->view('user/favorites', ['favoris' => $favoris]);
     }
 
     /**
-     * Supprime un favori
+     * Action AJAX : Ajouter/Retirer des favoris
      */
-    public function remove($idAnnonce = null)
+    public function toggle($idAnnonce = null)
     {
-        $this->requireRole('etudiant');
-
-        if ($idAnnonce === null) {
-            $this->redirect('/favoris');
+        header('Content-Type: application/json');
+        
+        if (!$idAnnonce) {
+            echo json_encode(['success' => false, 'message' => 'ID annonce manquant']);
+            return;
         }
 
+        $idEtudiant = $_SESSION['user_id'];
+        
         try {
-            $this->favorisModel->removeFavorite($_SESSION['user_id'], $idAnnonce);
-            $this->setFlash('success', 'Annonce supprimée des favoris !');
-            $this->redirect($_SERVER['HTTP_REFERER'] ?? '/favoris');
+            if ($this->favorisModel->isFavorite($idEtudiant, $idAnnonce)) {
+                $this->favorisModel->removeFavorite($idEtudiant, $idAnnonce);
+                echo json_encode(['success' => true, 'action' => 'removed', 'message' => 'Retiré des favoris']);
+            } else {
+                $this->favorisModel->addFavorite($idEtudiant, $idAnnonce);
+                echo json_encode(['success' => true, 'action' => 'added', 'message' => 'Ajouté aux favoris']);
+            }
         } catch (\Exception $e) {
-            $this->setFlash('error', 'Erreur lors de la suppression des favoris.');
-            $this->redirect('/favoris');
+            echo json_encode(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()]);
         }
     }
 }
