@@ -41,8 +41,16 @@ spl_autoload_register(function ($className) {
 });
 
 // Analyse de l'URL pour le routage MVC
-// Format attendu (via nginx) : /index.php?url=controller/action/param1/param2
-$url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
+// Supporte Apache (?url=) et nginx (REQUEST_URI)
+if (isset($_GET['url'])) {
+    $url = rtrim($_GET['url'], '/');
+} else {
+    // Extraire l'URL de REQUEST_URI pour nginx
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+    // Retirer le query string et le slash initial
+    $url = parse_url($requestUri, PHP_URL_PATH);
+    $url = ltrim($url, '/');
+}
 $url = filter_var($url, FILTER_SANITIZE_URL);
 $urlParams = explode('/', $url);
 
