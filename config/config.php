@@ -21,12 +21,11 @@ if($_SERVER['SERVER_NAME'] == 'localhost') {
     define('DB_DRIVER', '');
     define('DB_CHARSET', 'utf8mb4');
     
-    // URL de production - à adapter selon l'URL réelle du projet
-    define('ROOT', 'https://dorocho.hangar.example.com');
-    define('URLROOT', 'https://dorocho.hangar.example.com');
+    define('ROOT', 'https://dorocho.hangar.garageisep.com');
+    define('URLROOT', 'https://dorocho.hangar.garageisep.com');
 }
 
-define('APPROOT', __DIR__ . '/../app');
+define('APPROOT', __DIR__ . '/app');
 define('APP_NAME', 'Dorocho');
 define('APP_DESCRIPTION', 'Logements étudiants');
 define('DEBUG', false);
