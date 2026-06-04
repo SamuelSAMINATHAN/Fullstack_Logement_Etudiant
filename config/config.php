@@ -25,7 +25,7 @@ if($_SERVER['SERVER_NAME'] == 'localhost') {
     define('URLROOT', 'https://dorocho.hangar.garageisep.com');
 }
 
-define('APPROOT', __DIR__ . '/app');
+define('APPROOT', dirname(__DIR__) . '/app');
 define('APP_NAME', 'Dorocho');
 define('APP_DESCRIPTION', 'Logements étudiants');
 define('DEBUG', false);
